@@ -5,6 +5,9 @@ import { summarizeMessages } from './chatgpt'
 // Minimal content script UI mounted via Shadow DOM to avoid site CSS conflicts
 const hostId = 'vite-react-ts-extension-content-root';
 
+// 仅在允许的域名上注入（例如：https://chatgpt.com/）
+const allowedHosts = ['chatgpt.com', 'www.chatgpt.com'];
+
 // mount 函数负责创建 Shadow DOM 宿主元素，将样式注入其中，并挂载 React 应用程序。
 // 它确保内容脚本的 UI 在页面上是隔离的，避免与现有页面样式和脚本冲突。
 function mount() {
@@ -69,17 +72,23 @@ function mount() {
 }
 
 try {
-  mount();
-  // HMR friendly: re-mount on updates
-  if (import.meta.hot) {
-    import.meta.hot.accept(() => {
-      const existing = document.getElementById(hostId);
-      if (existing) existing.remove();
-      mount();
-      console.log('[content] HMR update applied');
-    });
+  // 仅当访问允许的域名时才注入按钮
+  const isAllowed = allowedHosts.includes(location.hostname);
+  if (!isAllowed) {
+    console.log('[content] skipped - domain not allowed:', location.hostname);
+  } else {
+    mount();
+    // HMR friendly: re-mount on updates
+    if (import.meta.hot) {
+      import.meta.hot.accept(() => {
+        const existing = document.getElementById(hostId);
+        if (existing) existing.remove();
+        mount();
+        console.log('[content] HMR update applied');
+      });
+    }
+    console.log('[content] injected');
   }
-  console.log('[content] injected');
 } catch (e) {
   // ignore
 }
