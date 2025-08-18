@@ -1,33 +1,34 @@
-import html2md from 'html-to-md';
 import {
   isWithinTokenLimit,
 } from 'gpt-tokenizer';
-import { chat } from '../api/chatApi';
+import { summarize, generateArticle } from '../api/chatApi';
+import {ChatGptCollector} from './ChatgptCollector';
 
-const userPrefix = "##### You said:";
 const tokenLimit = 3 * 1024; // 64k tokens
 
-export const getAllMessages = (): Message[] => {
-  const messages: Message[] = [];
-  const articleList = document.querySelectorAll("article");
-  if (articleList.length === 0) {
-    console.warn("No articles found on the page.");
-    return messages;
+const getCollector = (domain: string): MessageCollector => {
+  switch (domain) {
+    case 'chatgpt.com':
+      return new ChatGptCollector();
+    default:
+      console.warn(`No collector found for domain: ${domain}`);
+      return {
+        getAllMessages: () => []
+      };
   }
-  for (const article of articleList) {
-    const content = html2md(article.innerHTML);
-    // console.log(content);
-    const message: Message = {
-        role: content.startsWith(userPrefix) ? "user" : "assistant",
-        content,
-    }
-    messages.push(message);
-  };
-  return messages;
 }
 
-export const summarizeMessages = async (): Promise<string> => {
-  const messages = getAllMessages();
+export const generate = async (domain: string): Promise<string> => {
+  const summary = await summarizeMessages(domain);
+  if (!summary) {
+    console.warn("No summary generated.");
+    return "";
+  }
+  return await generateArticle(summary);
+}
+
+export const summarizeMessages = async (domain: string): Promise<string> => {
+  const messages = getCollector(domain).getAllMessages();
   if (messages.length === 0) {
     console.warn("No messages to summarize.");
     return "";
@@ -51,13 +52,13 @@ export const summarizeMessages = async (): Promise<string> => {
         }
 
     //   执行摘要处理
-        lastSummary = await chat(lastSummary, JSON.stringify(currentContextMessages));
+        lastSummary = await summarize(lastSummary, JSON.stringify(currentContextMessages));
 
         lastContextMessages = currentContextMessages;
         currentContextMessages = [];
     }
   }
-  lastSummary = await chat(lastSummary, JSON.stringify(currentContextMessages));
+  lastSummary = await summarize(lastSummary, JSON.stringify(currentContextMessages));
   console.log('Final Summary:', lastSummary);
   return lastSummary;
 }

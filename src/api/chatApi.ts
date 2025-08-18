@@ -1,9 +1,11 @@
-import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from '../prompts/summary_prompt';
+import { SUMMARY_SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from '../prompts/summary_prompt';
+import { ARTICLE_SYSTEM_PROMPT } from '../prompts/article_prompt';
+import commonRequest from '../lib/commonRequest';
 
 const model = 'grok-4-0709';
 const apiUrl = 'https://api.x.ai/v1/chat/completions';
 
-export const chat = async (lastSummary: string, userInput: string): Promise<string> => {
+export const summarize = async (lastSummary: string, userInput: string): Promise<string> => {
     const userPrompt = USER_PROMPT_TEMPLATE
         .replace('{lastSummary}', lastSummary)
         .replace('{currentMessages}', userInput)
@@ -12,7 +14,7 @@ export const chat = async (lastSummary: string, userInput: string): Promise<stri
     const messages = [
         {
             role: 'system',
-            content: SYSTEM_PROMPT,
+            content: SUMMARY_SYSTEM_PROMPT,
         },
         {
             role: 'user',
@@ -23,27 +25,30 @@ export const chat = async (lastSummary: string, userInput: string): Promise<stri
                 model: model,
                 messages: messages,
             }));
-    try {
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${import.meta.env.VITE_GROK_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: messages,
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        return data.choices[0].message.content;
-    } catch (error) {
-        console.error('Error during chat API call:', error);
-        return 'Error: Unable to get a response from the chat API.';
-    }
+    return commonRequest(apiUrl, JSON.stringify({
+            model: model,
+            messages: messages,
+        }));
 };
+
+export const generateArticle = async (summary: string) : Promise<string> => {
+    
+    const messages = [
+        {
+            role: 'system',
+            content: ARTICLE_SYSTEM_PROMPT,
+        },
+        {
+            role: 'user',
+            content: summary,
+        },
+    ];
+    // console.log('Reqsuest body:', JSON.stringify({
+    //             model: model,
+    //             messages: messages,
+    //         }));
+    return commonRequest(apiUrl, JSON.stringify({
+            model: model,
+            messages: messages,
+        }));
+}

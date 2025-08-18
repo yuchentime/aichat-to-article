@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { summarizeMessages } from './chatgpt'
+import { generate } from './generator'
 
 // Minimal content script UI mounted via Shadow DOM to avoid site CSS conflicts
 const hostId = 'vite-react-ts-extension-content-root';
@@ -10,7 +10,9 @@ const allowedHosts = ['chatgpt.com', 'www.chatgpt.com'];
 
 // mount 函数负责创建 Shadow DOM 宿主元素，将样式注入其中，并挂载 React 应用程序。
 // 它确保内容脚本的 UI 在页面上是隔离的，避免与现有页面样式和脚本冲突。
-function mount() {
+function mount(domain: string) {
+  console.log('[content] mounting on domain:', domain);
+
   if (document.getElementById(hostId)) return;
 
   const host = document.createElement('div');
@@ -45,15 +47,15 @@ function mount() {
 
   // App 组件是一个简单的 React 函数组件，它渲染一个可点击的徽章。
   // 点击徽章会向扩展的后台脚本发送一条消息。
-  const App = () => {
+  const ExecutionButton = () => {
 
     const loadingCurrentMessages = () => {
-      summarizeMessages().then((summary) => {
-        if (summary) {
-          console.log('Summary generated:', summary);
+      generate(domain).then((article) => {
+        if (article) {
+          console.log('Article generated:', article);
           // You can handle the summary here, e.g., send it to a background script or display it
         } else {
-          console.warn('No summary generated.');
+          console.warn('No article generated.');
         }
       }).catch((error) => {
         console.error('Error generating summary:', error);
@@ -68,7 +70,7 @@ function mount() {
   };
 
   const root = createRoot(mountPoint);
-  root.render(<App />);
+  root.render(<ExecutionButton />);
 }
 
 try {
@@ -77,13 +79,13 @@ try {
   if (!isAllowed) {
     console.log('[content] skipped - domain not allowed:', location.hostname);
   } else {
-    mount();
+    mount(location.hostname);
     // HMR friendly: re-mount on updates
     if (import.meta.hot) {
       import.meta.hot.accept(() => {
         const existing = document.getElementById(hostId);
         if (existing) existing.remove();
-        mount();
+        mount(location.hostname);
         console.log('[content] HMR update applied');
       });
     }
