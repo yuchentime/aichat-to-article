@@ -2,7 +2,6 @@ import { SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from '../prompts/summary_prompt';
 
 const model = 'grok-4-0709';
 const apiUrl = 'https://api.x.ai/v1/chat/completions';
-const apiKey = '';
 
 export const chat = async (lastSummary: string, userInput: string): Promise<string> => {
     const userPrompt = USER_PROMPT_TEMPLATE
@@ -29,7 +28,7 @@ export const chat = async (lastSummary: string, userInput: string): Promise<stri
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
+                'Authorization': `Bearer ${import.meta.env.VITE_GROK_API_KEY}`,
             },
             body: JSON.stringify({
                 model: model,
