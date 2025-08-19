@@ -1,0 +1,85 @@
+import React, { useEffect, useState } from 'react';
+
+interface ApiConfig {
+    provider: 'grok' | 'chatgpt' | 'gemini';
+    apiKey: string;
+    model: string;
+}
+
+const providers = [
+    { value: 'grok', label: 'Grok' },
+    { value: 'chatgpt', label: 'ChatGPT' },
+    { value: 'gemini', label: 'Gemini' },
+];
+
+const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [config, setConfig] = useState<ApiConfig>({
+        provider: 'grok',
+        apiKey: '',
+        model: '',
+    });
+
+    useEffect(() => {
+        chrome.storage.local.get('apiConfig').then(({ apiConfig }) => {
+            if (apiConfig) setConfig(apiConfig);
+        });
+    }, []);
+
+    const handleSave = () => {
+        chrome.storage.local.set({ apiConfig: config }).then(onClose);
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-800 p-4 rounded w-80 space-y-4">
+                <h2 className="text-lg font-semibold">模型设置</h2>
+                <div className="space-y-2">
+                    <label className="block text-sm">服务提供商</label>
+                    <select
+                        className="w-full border p-1 dark:bg-gray-700"
+                        value={config.provider}
+                        onChange={(e) =>
+                            setConfig({ ...config, provider: e.target.value as ApiConfig['provider'] })
+                        }
+                    >
+                        {providers.map((p) => (
+                            <option key={p.value} value={p.value}>
+                                {p.label}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="space-y-2">
+                    <label className="block text-sm">模型</label>
+                    <input
+                        className="w-full border p-1 dark:bg-gray-700"
+                        value={config.model}
+                        onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="block text-sm">API Key</label>
+                    <input
+                        className="w-full border p-1 dark:bg-gray-700"
+                        value={config.apiKey}
+                        onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                    />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                    <button className="px-3 py-1 text-sm" onClick={onClose}>
+                        取消
+                    </button>
+                    <button
+                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded"
+                        onClick={handleSave}
+                    >
+                        保存
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default SettingsModal;
+
