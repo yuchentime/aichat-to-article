@@ -1,3 +1,95 @@
+import { generate, summarizeMessages } from '../content/generator';
+
+interface QueueTask {
+  id: string;
+  action: 'generate' | 'summarize';
+  domain: string;
+  status: 'pending' | 'running' | 'finished';
+  result?: string;
+  error?: string;
+}
+
+const taskQueue: QueueTask[] = [];
+const taskState: Record<'pending' | 'running' | 'finished', QueueTask[]> = {
+  pending: [],
+  running: [],
+  finished: []
+};
+
+let processing = false;
+
+const saveState = async () => {
+  await chrome.storage.local.set({ taskState });
+};
+
+const runTask = async (task: QueueTask): Promise<string> => {
+  try {
+    if (task.action === 'generate') {
+      return await generate(task.domain);
+    }
+    return await summarizeMessages(task.domain);
+  } catch (e) {
+    console.error('task error', e);
+    throw e;
+  }
+};
+
+const processQueue = async () => {
+  if (processing) return;
+  const task = taskQueue.shift();
+  if (!task) return;
+  processing = true;
+
+  taskState.pending = taskState.pending.filter(t => t.id !== task.id);
+  task.status = 'running';
+  taskState.running.push(task);
+  await saveState();
+  chrome.runtime.sendMessage({ type: 'queueProgress', task });
+
+  const finalize = async (result?: string, error?: string) => {
+    taskState.running = taskState.running.filter(t => t.id !== task.id);
+    task.status = 'finished';
+    if (result) task.result = result;
+    if (error) task.error = error;
+    taskState.finished.push(task);
+    await saveState();
+    chrome.runtime.sendMessage({ type: 'queueProgress', task });
+    processing = false;
+    processQueue();
+  };
+
+  if (typeof Worker !== 'undefined') {
+    try {
+      const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+      worker.onmessage = async (e: MessageEvent<any>) => {
+        await finalize(e.data.result, e.data.error);
+        worker.terminate();
+      };
+      worker.onerror = async (e) => {
+        console.error('worker error', e);
+        await finalize(undefined, String(e));
+        worker.terminate();
+      };
+      worker.postMessage(task);
+    } catch (e) {
+      console.error('worker spawn failed', e);
+      try {
+        const result = await runTask(task);
+        await finalize(result);
+      } catch (err) {
+        await finalize(undefined, String(err));
+      }
+    }
+  } else {
+    try {
+      const result = await runTask(task);
+      await finalize(result);
+    } catch (err) {
+      await finalize(undefined, String(err));
+    }
+  }
+};
+
 chrome.runtime.onInstalled.addListener(async () => {
   console.log('[background] installed');
 
@@ -29,6 +121,22 @@ chrome.runtime.onMessage.addListener((
   if ((message as any)?.ping) {
     console.log('[background] received ping from', sender.id, 'at', (message as any).ping);
     sendResponse({ pong: Date.now() });
+    return true;
+  }
+
+  if (message?.type === 'queueGenerate') {
+    const id = (globalThis.crypto?.randomUUID?.() ?? Date.now().toString());
+    const task: QueueTask = {
+      id,
+      action: message.action || 'generate',
+      domain: message.domain || '',
+      status: 'pending'
+    };
+    taskQueue.push(task);
+    taskState.pending.push(task);
+    saveState();
+    processQueue();
+    sendResponse({ ok: true, id });
     return true;
   }
 
