@@ -22,7 +22,7 @@ let processing = false;
 
 const saveState = async () => {
   logger.background.info('保存任务状态', { taskState });
-  await chrome.storage.local.set({ taskState });
+  await chrome.storage.local.set({ tasks: taskState });
   logger.background.info('任务状态已保存到存储');
 };
 
@@ -34,7 +34,10 @@ const runTask = async (task: QueueTask): Promise<string> => {
       logger.background.info('调用生成函数', { domain: task.domain });
       result = await generate(task.domain, task.messages);
       logger.background.info('生成函数执行完成', { resultLength: result.length });
-      logger.background.info('生成结果', { result });
+      logger.background.info('生成结果: ', result);
+      task.result = result;
+      task.status = 'finished';
+      saveState();
     } else {
       throw new Error(`未知任务类型: ${task.action}`);
     }
