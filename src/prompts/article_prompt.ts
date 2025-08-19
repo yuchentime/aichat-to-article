@@ -21,7 +21,7 @@ export const ARTICLE_SYSTEM_PROMPT = `
 以Markdown格式输出
 
 ## Content Style
-专业严谨、客观理性
+专业严谨、客观理性，采用 Medium 博客的写作风格
 
 ## Constraints
 - 剔除人称代词，以第三方视角陈述事实

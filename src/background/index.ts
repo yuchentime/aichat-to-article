@@ -104,37 +104,30 @@ const processQueue = async () => {
   }
 };
 
-chrome.runtime.onInstalled.addListener(async () => {
-  logger.background.info('扩展已安装');
+// 使用 Map 来存储每个 Tab 的侧边栏状态
+const sidePanelStates = new Map();
 
-  // Enable side panel on action click if available
-  try {
-    logger.background.info('设置侧边栏行为');
-    await chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: true });
-    logger.background.info('侧边栏行为设置成功');
-  } catch (e) {
-    logger.background.warn('设置侧边栏行为失败', e);
-  }
+chrome.action.onClicked.addListener(async (tab) => {
+  const tabId = tab.id;
 
-  // Ensure side panel is enabled for all existing tabs
-  try {
-    logger.background.info('为现有标签页启用侧边栏');
-    const tabs = await chrome.tabs?.query?.({});
-    logger.background.info('查询到的标签页', { count: tabs?.length });
-    
-    for (const tab of tabs || []) {
-      if (tab.id) {
-        logger.background.info('为标签页启用侧边栏', { tabId: tab.id, url: tab.url });
-        await chrome.sidePanel?.setOptions?.({
-          tabId: tab.id,
-          enabled: true,
-          path: 'src/pages/sidepanel/index.html'
-        });
-      }
-    }
-    logger.background.info('所有标签页侧边栏设置完成');
-  } catch (e) {
-    logger.background.warn('为标签页设置侧边栏失败', e);
+  // 获取当前 Tab 的侧边栏状态，如果不存在则默认为 false
+  const isSidePanelEnabled = sidePanelStates.get(tabId) || false;
+
+  if (isSidePanelEnabled) {
+    // 如果侧边栏已开启，则关闭它
+    await chrome.sidePanel.setOptions({
+      tabId: tabId,
+      enabled: false
+    });
+    sidePanelStates.set(tabId, false); // 更新状态为 false
+  } else {
+    // 如果侧边栏未开启，则打开它
+    await chrome.sidePanel.setOptions({
+      tabId: tabId,
+      path: 'src/pages/sidepanel/index.html', // 确保你的 manifest.json 中配置了 sidepanel
+      enabled: true
+    });
+    sidePanelStates.set(tabId, true); // 更新状态为 true
   }
 });
 
@@ -176,62 +169,5 @@ chrome.runtime.onMessage.addListener((
     return true;
   }
 
-  if ((message as any)?.openSidePanel) {
-    (async () => {
-      try {
-        const windowId = sender.tab?.windowId;
-        if (windowId !== undefined && chrome.sidePanel?.open) {
-          await chrome.sidePanel.open({ windowId });
-        } else if (sender.tab?.id && chrome.sidePanel?.setOptions) {
-          // Fallback: ensure enabled on the tab
-          await chrome.sidePanel.setOptions({
-            tabId: sender.tab.id,
-            enabled: true,
-            path: 'src/pages/sidepanel/index.html'
-          });
-        }
-        sendResponse({ ok: true });
-      } catch (e) {
-        console.error('[background] openSidePanel error', e);
-        sendResponse({ ok: false, error: String(e) });
-      }
-    })();
-    return true; // keep channel open for async response
-  }
-
   return false;
 });
-
-// Keep side panel enabled as tabs change
-chrome.tabs.onActivated.addListener(async ({ tabId }) => {
- try {
-   await chrome.sidePanel?.setOptions?.({
-     tabId,
-     enabled: true,
-     path: 'src/pages/sidepanel/index.html'
-   });
- } catch {}
-});
-
-chrome.tabs.onUpdated.addListener(async (tabId, info) => {
- if (info.status === 'complete') {
-   try {
-     await chrome.sidePanel?.setOptions?.({
-       tabId,
-       enabled: true,
-       path: 'src/pages/sidepanel/index.html'
-     });
-   } catch {}
- }
-});
-
-// Example: context menu (can be enabled by adding "contextMenus" permission to manifest if needed)
-try {
- chrome.contextMenus?.create({
-   id: 'vite-react-ts-example',
-   title: 'Vite React TS Example',
-   contexts: ['page']
- });
-} catch (e) {
- // ignore during reloads
-}
