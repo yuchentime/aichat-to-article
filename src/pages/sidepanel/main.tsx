@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import ReactMarkdown from 'react-markdown';
 import '../../styles/tailwind.css';
 import logo from '../../assets/img/logo.svg';
 import { logger } from '../../lib/logger';
@@ -18,6 +19,7 @@ function SidePanelApp() {
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [runningCount, setRunningCount] = useState<number>(0);
+  const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null);
 
   const toggleTaskExpansion = (taskId: string) => {
     setExpandedTasks(prev => {
@@ -118,6 +120,17 @@ function SidePanelApp() {
     chrome.runtime.sendMessage({ type: 'cancelTask', id });
   };
 
+  const copyResult = async (task: Task) => {
+    try {
+      await navigator.clipboard.writeText(task.result);
+      setCopiedTaskId(task.id);
+      setTimeout(() => setCopiedTaskId(null), 2000);
+      logger.sidepanel.info('复制任务结果', { id: task.id });
+    } catch (err) {
+      logger.sidepanel.error('复制失败', err);
+    }
+  };
+
   return (
     <div className="w-[360px] min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="flex items-center gap-3">
@@ -138,50 +151,61 @@ function SidePanelApp() {
       </div>
 
       <ul className="space-y-2">
-        {tasks.map((task) => (
-          <li key={task.id} className="border rounded p-3 space-y-2">
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <div className="font-medium">{task.action}</div>
-                <div className="text-xs text-gray-500">
-                  {task.status} · {task.domain}
+        {tasks.map((task) => {
+          const isExpanded = expandedTasks.has(task.id);
+          const isCopied = copiedTaskId === task.id;
+          return (
+            <li
+              key={task.id}
+              className="border rounded-lg p-4 space-y-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow transition-shadow"
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="font-medium">{task.action}</div>
+                  <div className="text-xs text-gray-500">
+                    {task.status} · {task.domain}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 ml-2">
+                  {task.result && (
+                    <button
+                      className="text-blue-600 hover:underline text-sm"
+                      onClick={() => copyResult(task)}
+                    >
+                      {isCopied ? '已复制' : '复制'}
+                    </button>
+                  )}
+                  <button
+                    className="text-red-600 hover:underline text-sm"
+                    onClick={() => cancelTask(task.id)}
+                  >
+                    删除
+                  </button>
                 </div>
               </div>
-              <button
-                className="text-red-600 hover:underline text-sm ml-2"
-                onClick={() => cancelTask(task.id)}
-              >
-                删除
-              </button>
-            </div>
-            
-            {task.result && (
-              <div className="mt-2">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  {expandedTasks.has(task.id) ? (
-                    <div className="whitespace-pre-wrap break-words">
-                      {task.result}
-                    </div>
-                  ) : (
-                    <div className="line-clamp-3">
-                      {task.result.substring(0, 150)}
-                      {task.result.length > 150 && '...'}
-                    </div>
+
+              {task.result && (
+                <div className="mt-2">
+                  <div
+                    className={`text-sm text-gray-700 dark:text-gray-300 ${
+                      isExpanded ? '' : 'line-clamp-3'
+                    }`}
+                  >
+                    <ReactMarkdown>{task.result}</ReactMarkdown>
+                  </div>
+                  {task.result.length > 150 && (
+                    <button
+                      className="text-blue-600 hover:underline text-xs mt-1"
+                      onClick={() => toggleTaskExpansion(task.id)}
+                    >
+                      {isExpanded ? '收起' : '展开'}
+                    </button>
                   )}
                 </div>
-                
-                {task.result.length > 150 && (
-                  <button
-                    className="text-blue-600 hover:underline text-xs mt-1"
-                    onClick={() => toggleTaskExpansion(task.id)}
-                  >
-                    {expandedTasks.has(task.id) ? '收起' : '展开'}
-                  </button>
-                )}
-              </div>
-            )}
-          </li>
-        ))}
+              )}
+            </li>
+          );
+        })}
         {!tasks.length && <li className="text-sm text-gray-500">暂无已完成任务</li>}
       </ul>
     </div>
