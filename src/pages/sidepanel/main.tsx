@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import '../../styles/tailwind.css';
 import logo from '../../assets/img/logo.svg';
 import { logger } from '../../lib/logger';
+import SettingsModal from './SettingsModal';
 
 interface Task {
   id: string;
@@ -20,6 +21,7 @@ function SidePanelApp() {
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [runningCount, setRunningCount] = useState<number>(0);
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
 
   const toggleTaskExpansion = (taskId: string) => {
     setExpandedTasks(prev => {
@@ -136,6 +138,12 @@ function SidePanelApp() {
       <div className="flex items-center gap-3">
         <img src={logo} alt="Logo" className="w-8 h-8" />
         <h1 className="text-xl font-bold">Side Panel</h1>
+        <button
+          className="ml-auto text-sm text-blue-600 hover:underline"
+          onClick={() => setShowSettings(true)}
+        >
+          设置
+        </button>
       </div>
 
       {/* 任务状态统计 */}
@@ -208,6 +216,7 @@ function SidePanelApp() {
         })}
         {!tasks.length && <li className="text-sm text-gray-500">暂无已完成任务</li>}
       </ul>
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );
 }
