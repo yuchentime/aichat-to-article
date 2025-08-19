@@ -104,30 +104,19 @@ const processQueue = async () => {
   }
 };
 
-// 使用 Map 来存储每个 Tab 的侧边栏状态
-const sidePanelStates = new Map();
+// 跟踪侧边栏状态
+let sidePanelOpen = false;
 
-chrome.action.onClicked.addListener(async (tab) => {
-  const tabId = tab.id;
-
-  // 获取当前 Tab 的侧边栏状态，如果不存在则默认为 false
-  const isSidePanelEnabled = sidePanelStates.get(tabId) || false;
-
-  if (isSidePanelEnabled) {
-    // 如果侧边栏已开启，则关闭它
-    await chrome.sidePanel.setOptions({
-      tabId: tabId,
-      enabled: false
-    });
-    sidePanelStates.set(tabId, false); // 更新状态为 false
+chrome.action.onClicked.addListener((tab) => {
+  // 切换侧边栏状态
+  if (sidePanelOpen) {
+    // 关闭侧边栏
+    chrome.sidePanel.setPanelBehavior({openPanelOnActionClick: false});
+    sidePanelOpen = false;
   } else {
-    // 如果侧边栏未开启，则打开它
-    await chrome.sidePanel.setOptions({
-      tabId: tabId,
-      path: 'src/pages/sidepanel/index.html', // 确保你的 manifest.json 中配置了 sidepanel
-      enabled: true
-    });
-    sidePanelStates.set(tabId, true); // 更新状态为 true
+    // 打开侧边栏
+    chrome.sidePanel.setPanelBehavior({openPanelOnActionClick: true});
+    sidePanelOpen = true;
   }
 });
 
