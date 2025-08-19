@@ -3,11 +3,12 @@ import { logger } from '../lib/logger';
 
 interface QueueTask {
   id: string;
-  action: 'generate' | 'summarize';
+  action: 'generate' | 'summary';
   domain: string;
   status: 'pending' | 'running' | 'finished';
   result?: string;
   error?: string;
+  messages: Message[];
 }
 
 const taskQueue: QueueTask[] = [];
@@ -31,12 +32,11 @@ const runTask = async (task: QueueTask): Promise<string> => {
     let result: string;
     if (task.action === 'generate') {
       logger.background.info('调用生成函数', { domain: task.domain });
-      result = await generate(task.domain);
+      result = await generate(task.domain, task.messages);
       logger.background.info('生成函数执行完成', { resultLength: result.length });
+      logger.background.info('生成结果', { result });
     } else {
-      logger.background.info('调用摘要函数', { domain: task.domain });
-      result = await summarizeMessages(task.domain);
-      logger.background.info('摘要函数执行完成', { resultLength: result.length });
+      throw new Error(`未知任务类型: ${task.action}`);
     }
     logger.background.info('任务执行成功', { taskId: task.id });
     return result;
@@ -147,19 +147,24 @@ chrome.runtime.onMessage.addListener((
   }
 
   if (message?.type === 'queueGenerate') {
-    const id = (globalThis.crypto?.randomUUID?.() ?? Date.now().toString());
-    logger.background.info(`收到任务请求：${id}`)
+    const { domain, messages, taskId, action } = message.payload || {};
+    if (!domain || !messages || !Array.isArray(messages)) {
+      sendResponse({ ok: false, error: 'Invalid payload' });
+      return true;
+    }
+    logger.background.info(`收到任务请求：${taskId}, 域名：${domain}, 消息数量：${messages.length}`);
     const task: QueueTask = {
-      id,
-      action: message.action || 'generate',
-      domain: message.domain || '',
-      status: 'pending'
+      id: taskId || `task-${Date.now()}`,
+      action,
+      domain,
+      status: 'pending',
+      messages
     };
     taskQueue.push(task);
     taskState.pending.push(task);
     saveState();
     processQueue();
-    sendResponse({ ok: true, id });
+    sendResponse({ ok: true, id: taskId });
     return true;
   }
 

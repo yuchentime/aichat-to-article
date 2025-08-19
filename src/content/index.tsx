@@ -59,10 +59,12 @@ function mount(domain: string) {
     }, []);
 
     const loadingCurrentMessages = () => {
+      // 取得地址栏url最后一个斜杠“/”之后的字符串
+      const taskId = window.location.href.replace(/\/$/, '').split('/').pop();
       const messages = new ChatGptCollector().getAllMessages();
       chrome.runtime.sendMessage({
         type: 'queueGenerate',
-        payload: { domain, messages }
+        payload: { domain, messages, taskId, action: 'generate' }
       });
       alert('Task added to queue');
     };

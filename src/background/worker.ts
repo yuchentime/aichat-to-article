@@ -1,9 +1,10 @@
-import { generate, summarizeMessages } from '../content/generator';
+import { generate } from '../content/generator';
 
 interface WorkerTask {
   id: string;
   action: 'generate' | 'summarize';
   domain: string;
+  messages: Message[];
 }
 
 self.onmessage = async (e: MessageEvent<WorkerTask>) => {
@@ -11,9 +12,7 @@ self.onmessage = async (e: MessageEvent<WorkerTask>) => {
   try {
     let result = '';
     if (task.action === 'generate') {
-      result = await generate(task.domain);
-    } else {
-      result = await summarizeMessages(task.domain);
+      result = await generate(task.domain, task.messages);
     }
     (self as any).postMessage({ id: task.id, result });
   } catch (err) {

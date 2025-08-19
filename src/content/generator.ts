@@ -18,8 +18,8 @@ const getCollector = (domain: string): MessageCollector => {
   }
 }
 
-export const generate = async (domain: string): Promise<string> => {
-  const summary = await summarizeMessages(domain);
+export const generate = async (domain: string, messages: Message[]): Promise<string> => {
+  const summary = await summarizeMessages(domain, messages);
   if (!summary) {
     console.warn("No summary generated.");
     return "";
@@ -27,8 +27,7 @@ export const generate = async (domain: string): Promise<string> => {
   return await generateArticle(summary);
 }
 
-export const summarizeMessages = async (domain: string): Promise<string> => {
-  const messages = getCollector(domain).getAllMessages();
+export const summarizeMessages = async (domain: string, messages: Message[]): Promise<string> => {
   if (messages.length === 0) {
     console.warn("No messages to summarize.");
     return "";
