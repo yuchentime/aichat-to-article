@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../styles/tailwind.css';
 import logo from '../../assets/img/logo.svg';
+import { logger } from '../../lib/logger';
 
 interface Task {
   id: string;
@@ -15,33 +16,63 @@ function SidePanelApp() {
 
   useEffect(() => {
     const load = async () => {
+      logger.sidepanel.info('开始加载任务列表');
       const { tasks: stored = [] } = await chrome.storage.local.get('tasks');
+      logger.sidepanel.info('从 chrome.storage.local 获取到的任务列表', stored);
       setTasks(stored);
+      logger.sidepanel.info('任务列表加载完成', { count: stored.length });
     };
+    
     const handleStorage = (
       changes: { [key: string]: chrome.storage.StorageChange },
       area: string,
     ) => {
+      logger.sidepanel.info('存储变化事件', { area, changes });
       if (area === 'local' && changes.tasks) {
+        logger.sidepanel.info('任务列表已更新', {
+          oldCount: changes.tasks.oldValue?.length || 0,
+          newCount: changes.tasks.newValue?.length || 0
+        });
         setTasks(changes.tasks.newValue || []);
       }
     };
+    
     load();
+    logger.sidepanel.info('添加存储变化监听器');
     chrome.storage.onChanged.addListener(handleStorage);
-    return () => chrome.storage.onChanged.removeListener(handleStorage);
+    return () => {
+      logger.sidepanel.info('移除存储变化监听器');
+      chrome.storage.onChanged.removeListener(handleStorage);
+    };
   }, []);
 
   useEffect(() => {
-    const handleMessage = (message: any) => {
+    const handleMessage = (
+      message: any,
+      sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: any) => void
+    ) => {
+      logger.sidepanel.info('收到消息', { message, sender });
       if (message?.type === 'taskStatusChanged') {
-        chrome.storage.local.get('tasks').then(({ tasks: stored = [] }) => setTasks(stored));
+        logger.sidepanel.info('任务状态变化，重新加载任务列表');
+        chrome.storage.local.get('tasks').then(({ tasks: stored = [] }) => {
+          logger.sidepanel.info('重新加载的任务列表', stored);
+          setTasks(stored);
+        });
       }
+      return false; // 不保持消息通道开放
     };
+    
+    logger.sidepanel.info('添加消息监听器');
     chrome.runtime.onMessage.addListener(handleMessage);
-    return () => chrome.runtime.onMessage.removeListener(handleMessage);
+    return () => {
+      logger.sidepanel.info('移除消息监听器');
+      chrome.runtime.onMessage.removeListener(handleMessage);
+    };
   }, []);
 
   const cancelTask = (id: string) => {
+    logger.sidepanel.info('取消任务', { id });
     chrome.runtime.sendMessage({ type: 'cancelTask', id });
   };
 
@@ -77,8 +108,11 @@ function SidePanelApp() {
 
 const container = document.getElementById('root')!;
 const root = createRoot(container);
+
+logger.sidepanel.info('侧边栏应用初始化');
 root.render(
   <React.StrictMode>
     <SidePanelApp />
   </React.StrictMode>,
 );
+logger.sidepanel.info('侧边栏应用渲染完成');
