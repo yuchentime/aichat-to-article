@@ -12,11 +12,6 @@ interface Task {
   result: string;
 }
 
-interface StoredTasks {
-  finished: Task[];
-  pending: Task[];
-  running: Task[];
-}
 
 function SidePanelApp() {
   const [tasks, setTasks] = useState<Task[]>([]);
