@@ -26,6 +26,8 @@ const saveState = async () => {
   logger.background.info('任务状态已保存到存储');
 };
 
+// const check
+
 const runTask = async (task: QueueTask): Promise<string> => {
   logger.background.info('开始执行任务', { taskId: task.id, action: task.action, domain: task.domain });
   try {
@@ -133,7 +135,7 @@ chrome.runtime.onMessage.addListener((
 
   if (message?.type === 'queueGenerate') {
     const { domain, messages, taskId, action } = message.payload || {};
-    if (!domain || !messages || !Array.isArray(messages)) {
+    if (!domain || !messages || !Array.isArray(messages) || !taskId) {
       sendResponse({ ok: false, error: 'Invalid payload' });
       return true;
     }
@@ -143,6 +145,7 @@ chrome.runtime.onMessage.addListener((
       sendResponse({ ok: false, error: 'Task already exists' });
       return true;
     }
+    
     const task: QueueTask = {
       id: taskId || `task-${Date.now()}`,
       action,

@@ -16,3 +16,45 @@ body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
+
+/* Markdown content styling */
+.markdown-content {
+  line-height: 1.6;
+}
+
+.markdown-content pre {
+  @apply rounded-md overflow-x-auto;
+}
+
+.markdown-content code {
+  @apply text-sm;
+}
+
+.markdown-content .mermaid-diagram {
+  @apply flex justify-center items-center;
+}
+
+.markdown-content .mermaid-diagram svg {
+  @apply max-w-full h-auto;
+}
+
+/* Fix line-clamp for markdown content */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Ensure proper spacing in collapsed state */
+.line-clamp-3 .markdown-content > *:not(:nth-child(-n+3)) {
+  display: none;
+}
+
+/* Override line-clamp when expanded */
+.markdown-content:not(.line-clamp-3) {
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  overflow: visible;
+}

@@ -54,7 +54,19 @@ function SidePanelApp() {
   useEffect(() => {
     const load = async () => {
       logger.sidepanel.info('开始加载任务列表');
-      const { tasks: stored = { finished: [], pending: [], running: [] } } = await chrome.storage.local.get('tasks');
+      
+      let stored = { finished: [], pending: [], running: [] };
+      
+      // Handle Chrome API availability
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+          const result = await chrome.storage.local.get('tasks');
+          stored = result.tasks || stored;
+        }
+      } catch (error) {
+        logger.sidepanel.info('Chrome storage not available, using sample data');
+      }
+      
       logger.sidepanel.info('从 chrome.storage.local 获取到的任务列表', stored);
       
       // 只显示已完成的任务
@@ -62,7 +74,105 @@ function SidePanelApp() {
       const pendingTasks = stored.pending || [];
       const runningTasks = stored.running || [];
       
-      setTasks(finishedTasks);
+      // Add sample markdown data for testing if no tasks exist
+      if (finishedTasks.length === 0) {
+        const sampleTasks: Task[] = [
+          {
+            id: 'sample-1',
+            action: 'markdown-test',
+            status: 'completed',
+            domain: 'test',
+            result: `# 测试标题
+
+这是一个**粗体文本**和*斜体文本*的示例。
+
+## 代码块示例
+
+\`\`\`javascript
+function hello() {
+  console.log("Hello, World!");
+  return "success";
+}
+\`\`\`
+
+## JSON 示例
+
+\`\`\`json
+{
+  "name": "测试",
+  "version": "1.0.0",
+  "dependencies": {
+    "react": "^18.0.0"
+  }
+}
+\`\`\`
+
+## 列表示例
+
+- 第一项
+- 第二项
+  - 嵌套项
+- 第三项
+
+## 表格示例
+
+| 列1 | 列2 | 列3 |
+|-----|-----|-----|
+| 数据1 | 数据2 | 数据3 |
+| 数据4 | 数据5 | 数据6 |
+
+## 引用示例
+
+> 这是一个引用块
+> 可以包含多行内容
+
+## 链接示例
+
+[访问 React 官网](https://reactjs.org)
+
+## 内联代码
+
+使用 \`npm install\` 命令安装依赖。`
+          },
+          {
+            id: 'sample-2',
+            action: 'mermaid-test',
+            status: 'completed',
+            domain: 'mermaid',
+            result: `# Mermaid 图表示例
+
+## 流程图
+
+\`\`\`mermaid
+graph TD
+    A[开始] --> B{是否登录?}
+    B -->|是| C[显示主页]
+    B -->|否| D[显示登录页]
+    C --> E[结束]
+    D --> E
+\`\`\`
+
+## 序列图
+
+\`\`\`mermaid
+sequenceDiagram
+    participant A as 用户
+    participant B as 前端
+    participant C as 后端
+    A->>B: 点击登录
+    B->>C: 发送登录请求
+    C->>B: 返回结果
+    B->>A: 显示结果
+\`\`\`
+
+这是一个包含 Mermaid 图表的示例任务。`
+          }
+        ];
+        setTasks(sampleTasks);
+      } else {
+        setTasks(finishedTasks);
+      }
+      
       setPendingCount(pendingTasks.length);
       setRunningCount(runningTasks.length);
       logger.sidepanel.info('任务列表加载完成', {
@@ -137,7 +247,7 @@ function SidePanelApp() {
     <div className="w-full min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="flex items-center gap-3">
         <img src={logo} alt="Logo" className="w-8 h-8" />
-        <h1 className="text-xl font-bold">Side Panel</h1>
+        <h1 className="text-xl font-bold">任务列表</h1>
         <button
           className="ml-auto text-sm text-blue-600 hover:underline"
           onClick={() => setShowSettings(true)}
