@@ -1,19 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import ReactMarkdown from 'react-markdown';
 import '../../styles/tailwind.css';
 import logo from '../../assets/img/logo.svg';
 import { logger } from '../../lib/logger';
 import SettingsModal from './SettingsModal';
-
-interface Task {
-  id: string;
-  action: string;
-  domain: string;
-  status: string;
-  result: string;
-}
-
+import ResultItem from './ResultItem';
 
 function SidePanelApp() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -33,6 +24,31 @@ function SidePanelApp() {
       }
       return newSet;
     });
+  };
+
+  const copyResult = async (task: Task) => {
+    try {
+      await navigator.clipboard.writeText(task.result || '');
+      setCopiedTaskId(task.id);
+      setTimeout(() => setCopiedTaskId(null), 2000);
+      logger.sidepanel.info('复制任务结果', { id: task.id });
+    } catch (err) {
+      logger.sidepanel.error('复制失败', err);
+    }
+  };
+
+  const deleteTask = async (id: string) => {
+    try {
+      logger.sidepanel.info('删除任务', { id });
+      const { tasks: stored = { finished: [], pending: [], running: [] } } = await chrome.storage.local.get('tasks');
+      const updatedFinished = (stored.finished || []).filter((t: Task) => t.id !== id);
+      const updatedState = { ...stored, finished: updatedFinished };
+      await chrome.storage.local.set({ tasks: updatedState });
+      setTasks(prev => prev.filter(t => t.id !== id));
+      logger.sidepanel.info('任务已从存储中删除', { id });
+    } catch (err) {
+      logger.sidepanel.error('删除任务失败', err);
+    }
   };
 
   useEffect(() => {
@@ -117,30 +133,6 @@ function SidePanelApp() {
     };
   }, []);
 
-  const deleteTask = (id: string) => {
-    logger.sidepanel.info('取消任务', { id });
-    chrome.storage.local.get('tasks').then(({ tasks: stored = { finished: [], pending: [], running: [] } }) => {
-      const updatedFinished = (stored.finished || []).filter((t: Task) => t.id !== id);
-      const updatedState = { ...stored, finished: updatedFinished };
-      chrome.storage.local.set({ tasks: updatedState }).then(() => {
-        const newTasks = tasks.filter(t => t.id !== id);
-        setTasks(newTasks);
-        logger.sidepanel.info('任务已取消并从存储中删除', { id });
-      });
-    });
-  };
-
-  const copyResult = async (task: Task) => {
-    try {
-      await navigator.clipboard.writeText(task.result);
-      setCopiedTaskId(task.id);
-      setTimeout(() => setCopiedTaskId(null), 2000);
-      logger.sidepanel.info('复制任务结果', { id: task.id });
-    } catch (err) {
-      logger.sidepanel.error('复制失败', err);
-    }
-  };
-
   return (
     <div className="w-4/5 min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="flex items-center gap-3">
@@ -166,67 +158,23 @@ function SidePanelApp() {
         </div>
       </div>
 
-      <ul className="space-y-2">
-        {tasks.map((task) => {
-          const isExpanded = expandedTasks.has(task.id);
-          const isCopied = copiedTaskId === task.id;
-          return (
-            <li
-              key={task.id}
-              className="border rounded-lg p-4 space-y-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow transition-shadow"
-            >
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <div className="font-medium">{task.action}</div>
-                  <div className="text-xs text-gray-500">
-                    {task.status} · {task.domain}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                  {task.result && (
-                    <button
-                      className="text-blue-600 hover:underline text-sm"
-                      onClick={() => copyResult(task)}
-                    >
-                      {isCopied ? '已复制' : '复制'}
-                    </button>
-                  )}
-                  <button
-                    className="text-red-600 hover:underline text-sm"
-                    onClick={() => deleteTask(task.id)}
-                  >
-                    删除
-                  </button>
-                </div>
-              </div>
-
-              {task.result && (
-                <div className="mt-2">
-                  <div
-                    className={`text-sm text-gray-700 dark:text-gray-300 ${
-                      isExpanded ? '' : 'line-clamp-3'
-                    }`}
-                  >
-                    <ReactMarkdown>{task.result}</ReactMarkdown>
-                  </div>
-                  {task.result.length > 150 && (
-                    <button
-                      className="text-blue-600 hover:underline text-xs mt-1"
-                      onClick={() => toggleTaskExpansion(task.id)}
-                    >
-                      {isExpanded ? '收起' : '展开'}
-                    </button>
-                  )}
-                </div>
-              )}
-            </li>
-          );
-        })}
-        {!tasks.length && <li className="text-sm text-gray-500">暂无已完成任务</li>}
-      </ul>
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-    </div>
-  );
+     <ul className="space-y-2">
+       {tasks.map((task) => (
+         <ResultItem
+           key={task.id}
+           task={task}
+           isExpanded={expandedTasks.has(task.id)}
+           isCopied={copiedTaskId === task.id}
+           onToggle={toggleTaskExpansion}
+           onCopy={copyResult}
+           onDelete={deleteTask}
+         />
+       ))}
+       {!tasks.length && <li className="text-sm text-gray-500">暂无已完成任务</li>}
+     </ul>
+     {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+   </div>
+ );
 }
 
 const container = document.getElementById('root')!;
