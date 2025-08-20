@@ -134,7 +134,7 @@ function SidePanelApp() {
   }, []);
 
   return (
-    <div className="w-4/5 min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="w-full min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="flex items-center gap-3">
         <img src={logo} alt="Logo" className="w-8 h-8" />
         <h1 className="text-xl font-bold">Side Panel</h1>
