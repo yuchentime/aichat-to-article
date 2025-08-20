@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ChatGptCollector } from './ChatgptCollector';
+import { logger } from '@/lib/logger';
 
 // Minimal content script UI mounted via Shadow DOM to avoid site CSS conflicts
 const hostId = 'vite-react-ts-extension-content-root';
@@ -62,6 +63,7 @@ function mount(domain: string) {
       // 取得地址栏url最后一个斜杠“/”之后的字符串
       const taskId = window.location.href.replace(/\/$/, '').split('/').pop();
       const messages = new ChatGptCollector().getAllMessages();
+      logger.content.info('Collected messages', messages);
       chrome.runtime.sendMessage({
         type: 'queueGenerate',
         payload: { domain, messages, taskId, action: 'generate' }

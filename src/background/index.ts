@@ -1,4 +1,4 @@
-import { generate } from '../content/generator';
+import { generateArticle } from '../api/chatApi';
 import { logger } from '../lib/logger';
 
 interface QueueTask {
@@ -32,7 +32,7 @@ const runTask = async (task: QueueTask): Promise<string> => {
     let result: string;
     if (task.action === 'generate') {
       logger.background.info('调用生成函数', { domain: task.domain });
-      result = await generate(task.domain, task.messages);
+      result = await generateArticle(JSON.stringify(task.messages));
       logger.background.info('生成函数执行完成', { resultLength: result.length });
       logger.background.info('生成结果: ', result);
       task.result = result;

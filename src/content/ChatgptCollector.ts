@@ -15,7 +15,7 @@ export class ChatGptCollector implements MessageCollector {
             const content = html2md(article.innerHTML);
             // console.log(content);
             const message: Message = {
-                role: content.startsWith(this.userPrefix) ? "user" : "assistant",
+                role: content.includes(this.userPrefix) ? "user" : "assistant",
                 content,
             }
             messages.push(message);

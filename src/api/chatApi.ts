@@ -1,4 +1,3 @@
-import { SUMMARY_SYSTEM_PROMPT, USER_PROMPT_TEMPLATE } from '../prompts/summary_prompt';
 import { ARTICLE_SYSTEM_PROMPT } from '../prompts/article_prompt';
 import commonRequest from '../lib/commonRequest';
 
@@ -55,27 +54,10 @@ const request = async (messages: any[]): Promise<string> => {
     }
 };
 
-export const summarize = async (
-    lastSummary: string,
-    userInput: string,
-): Promise<string> => {
-    const userPrompt = USER_PROMPT_TEMPLATE
-        .replace('{lastSummary}', lastSummary)
-        .replace('{currentMessages}', userInput)
-        .replace('{language}', '中文');
-
-    const messages = [
-        { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt },
-    ];
-
-    return request(messages);
-};
-
-export const generateArticle = async (summary: string): Promise<string> => {
+export const generateArticle = async (userInput: string): Promise<string> => {
     const messages = [
         { role: 'system', content: ARTICLE_SYSTEM_PROMPT },
-        { role: 'user', content: summary },
+        { role: 'user', content: userInput },
     ];
 
     return request(messages);
