@@ -23,7 +23,6 @@ const ResultItem: React.FC<ResultItemProps> = ({
     <li className="border rounded-lg p-4 space-y-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow transition-shadow">
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <div className="font-medium">{task.action}</div>
           <div className="text-xs text-gray-500">
             {task.status} · {task.domain}
           </div>
