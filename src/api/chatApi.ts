@@ -2,14 +2,15 @@ import { ARTICLE_SYSTEM_PROMPT } from '../prompts/article_prompt';
 import commonRequest from '../lib/commonRequest';
 
 interface ApiConfig {
-    provider: 'grok' | 'chatgpt' | 'gemini';
+    provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
     apiKey: string;
     model: string;
+    baseUrl?: string;
 }
 
 const getConfig = async (): Promise<ApiConfig> => {
     const { apiConfig } = await chrome.storage.local.get('apiConfig');
-    return apiConfig || { provider: 'grok', apiKey: '', model: 'grok-4-0709' };
+    return apiConfig || { provider: 'grok', apiKey: '', model: 'grok-4-0709', baseUrl: '' };
 };
 
 const request = async (messages: any[]): Promise<string> => {
@@ -33,6 +34,13 @@ const request = async (messages: any[]): Promise<string> => {
             }));
             body = JSON.stringify({ contents: geminiMessages });
             break;
+        case 'custom': {
+            const base = (config.baseUrl || '').trim();
+            apiUrl = base;
+            body = JSON.stringify({ model: config.model, messages });
+            headers = { Authorization: `Bearer ${config.apiKey}` };
+            break;
+        }
         case 'grok':
         default:
             apiUrl = 'https://api.x.ai/v1/chat/completions';

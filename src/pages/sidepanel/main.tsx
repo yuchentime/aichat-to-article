@@ -117,9 +117,17 @@ function SidePanelApp() {
     };
   }, []);
 
-  const cancelTask = (id: string) => {
+  const deleteTask = (id: string) => {
     logger.sidepanel.info('取消任务', { id });
-    chrome.runtime.sendMessage({ type: 'cancelTask', id });
+    chrome.storage.local.get('tasks').then(({ tasks: stored = { finished: [], pending: [], running: [] } }) => {
+      const updatedFinished = (stored.finished || []).filter((t: Task) => t.id !== id);
+      const updatedState = { ...stored, finished: updatedFinished };
+      chrome.storage.local.set({ tasks: updatedState }).then(() => {
+        const newTasks = tasks.filter(t => t.id !== id);
+        setTasks(newTasks);
+        logger.sidepanel.info('任务已取消并从存储中删除', { id });
+      });
+    });
   };
 
   const copyResult = async (task: Task) => {
@@ -134,7 +142,7 @@ function SidePanelApp() {
   };
 
   return (
-    <div className="w-[360px] min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="w-4/5 min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="flex items-center gap-3">
         <img src={logo} alt="Logo" className="w-8 h-8" />
         <h1 className="text-xl font-bold">Side Panel</h1>
@@ -185,7 +193,7 @@ function SidePanelApp() {
                   )}
                   <button
                     className="text-red-600 hover:underline text-sm"
-                    onClick={() => cancelTask(task.id)}
+                    onClick={() => deleteTask(task.id)}
                   >
                     删除
                   </button>
