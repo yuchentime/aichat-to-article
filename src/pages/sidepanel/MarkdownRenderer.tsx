@@ -30,7 +30,7 @@ const MermaidDiagram: React.FC<{ chart: string }> = ({ chart }) => {
         .catch((error) => {
           console.error('Mermaid rendering error:', error);
           if (ref.current) {
-            ref.current.innerHTML = `<pre className="bg-gray-100"><code>${chart}</code></pre>`;
+            ref.current.innerHTML = `<pre><code>${chart}</code></pre>`;
           }
         });
     }
