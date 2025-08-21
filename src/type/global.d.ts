@@ -15,4 +15,5 @@ interface Task {
   status: string;
   result: string;
   model?: string;
+  synced: boolean;
 }
