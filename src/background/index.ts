@@ -9,6 +9,7 @@ interface QueueTask {
   model: string;
   status: 'pending' | 'running' | 'finished';
   result?: string;
+  summary?: string;
   error?: string;
   messages: string[];
   synced: boolean;
@@ -38,7 +39,10 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
     taskState.running = taskState.running.filter(t => t.id !== task.id);
     task.status = 'finished';
-    if (result) task.result = result;
+    if (result) {
+      task.summary = result.slice(0, 200); // 简单摘要，实际可用更复杂的逻辑
+      task.result = result;
+    }
     if (error) task.error = error;
     taskState.finished.push(task);
     // todo 浏览器通知

@@ -14,6 +14,7 @@ interface Task {
   domain: string;
   status: string;
   result: string;
+  summary?: string;
   model?: string;
   synced: boolean;
 }

@@ -1,5 +1,4 @@
 import React from 'react';
-import MarkdownRenderer from './MarkdownRenderer';
 
 type ResultItemProps = {
   task: Task;
@@ -8,6 +7,7 @@ type ResultItemProps = {
   onToggle: (taskId: string) => void;
   onCopy: (task: Task) => void;
   onDelete: (taskId: string) => void;
+  onViewResult: (task: Task) => void;
 };
 
 const ResultItem: React.FC<ResultItemProps> = ({
@@ -17,7 +17,11 @@ const ResultItem: React.FC<ResultItemProps> = ({
   onToggle,
   onCopy,
   onDelete,
+  onViewResult,
 }) => {
+  const handleViewResult = () => {
+    onViewResult(task);
+  };
   return (
     <li className="relative border rounded-lg p-4 space-y-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow transition-shadow">
       {task.synced && (
@@ -47,22 +51,19 @@ const ResultItem: React.FC<ResultItemProps> = ({
         </div>
       </div>
 
-      {!!task.result && (
-        <div className="mt-2">
-          <MarkdownRenderer
-            content={task.result}
-            className={`text-sm text-gray-700 dark:text-gray-300 ${isExpanded ? 'markdown-content' : 'markdown-content line-clamp-3'} p-3`}
-          />
-          {task.result.length > 150 && (
-            <button
-              className="text-blue-600 hover:underline text-xs mt-1"
-              onClick={() => onToggle(task.id)}
-            >
-              {isExpanded ? '收起' : '展开'}
-            </button>
-          )}
+      <div className="mt-2">
+        <div className="text-sm text-gray-700 dark:text-gray-300 p-3 bg-gray-50 dark:bg-gray-700 rounded">
+          {task.summary}
         </div>
-      )}
+        {task.result && (
+          <button
+            className="text-blue-600 hover:underline text-xs mt-1"
+            onClick={handleViewResult}
+          >
+            查看
+          </button>
+        )}
+      </div>
     </li>
   );
 };

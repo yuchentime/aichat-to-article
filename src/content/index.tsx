@@ -6,7 +6,7 @@ const allowedHosts = ['chatgpt.com', 'www.chatgpt.com'];
 
 if (allowedHosts.includes(location.hostname)) {
   // Listen for messages from the background script triggered by context menu
-  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((message, _sender, sendResponse: (response?: any) => void) => {
     if (message?.type === 'saveToNotion') {
       const taskId = window.location.href.replace(/\/$/, '').split('/').pop();
       const messages: string[] = new ChatGptCollector().getAllMessages();
@@ -28,7 +28,10 @@ if (allowedHosts.includes(location.hostname)) {
         }
       });
       sendResponse({ ok: true });
+      return true; // Keep message channel open for async response
     }
+    return false;
   });
 }
+
 

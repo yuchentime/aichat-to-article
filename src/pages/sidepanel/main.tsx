@@ -5,6 +5,7 @@ import logo from '../../assets/img/logo.svg';
 import { logger } from '../../lib/logger';
 import SettingsModal from './SettingsModal';
 import ResultItem from './ResultItem';
+import ResultModal from './ResultModal';
 
 interface ApiConfig {
   provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -23,6 +24,8 @@ function SidePanelApp() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [apiConfigs, setApiConfigs] = useState<ApiConfig[]>([]);
   const [currentProvider, setCurrentProvider] = useState<string>('');
+  const [showResultModal, setShowResultModal] = useState<boolean>(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const toggleTaskExpansion = (taskId: string) => {
     setExpandedTasks(prev => {
@@ -66,6 +69,16 @@ function SidePanelApp() {
     setApiConfigs(updated);
     setCurrentProvider(provider);
     await chrome.storage.local.set({ apiConfig: updated });
+  };
+
+  const handleViewResult = (task: Task) => {
+    setSelectedTask(task);
+    setShowResultModal(true);
+  };
+
+  const handleCloseResultModal = () => {
+    setShowResultModal(false);
+    setSelectedTask(null);
   };
 
   useEffect(() => {
@@ -183,8 +196,8 @@ function SidePanelApp() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen p-4 space-y-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <div className="flex items-center gap-3">
+    <div className="w-full min-h-screen p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <div className="flex items-center gap-3 my-2">
         <img src={logo} alt="Logo" className="w-8 h-8" />
         <h1 className="text-xl font-bold">任务列表</h1>
         <button
@@ -196,7 +209,7 @@ function SidePanelApp() {
       </div>
 
       {apiConfigs.length > 0 && (
-        <div className="space-y-2 text-sm">
+        <div className="space-y-2 text-sm my-2">
           <label className="block">API Provider</label>
           <select
             className="w-full border p-1 dark:bg-gray-700"
@@ -213,7 +226,7 @@ function SidePanelApp() {
       )}
 
       {/* 任务状态统计 */}
-      <div className="flex gap-4 text-sm">
+      <div className="flex gap-4 text-sm my-2">
         <div className="flex items-center gap-1">
           <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
           <span className="text-gray-600 dark:text-gray-400">待处理: {pendingCount}</span>
@@ -224,7 +237,7 @@ function SidePanelApp() {
         </div>
       </div>
 
-     <ul className="space-y-2">
+     <ul className="space-y-2 my-2">
        {tasks.map((task) => (
          <ResultItem
            key={task.id}
@@ -234,11 +247,20 @@ function SidePanelApp() {
            onToggle={toggleTaskExpansion}
            onCopy={copyResult}
            onDelete={deleteTask}
+           onViewResult={handleViewResult}
          />
        ))}
        {!tasks.length && <li className="text-sm text-gray-500">暂无已完成任务</li>}
      </ul>
      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+     {showResultModal && selectedTask && (
+       <ResultModal
+         isOpen={showResultModal}
+         onClose={handleCloseResultModal}
+         title={`${selectedTask.status} · ${selectedTask.domain}`}
+         content={selectedTask.result || ''}
+       />
+     )}
    </div>
  );
 }

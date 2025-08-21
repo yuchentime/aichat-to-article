@@ -2,7 +2,7 @@ import { defineManifest } from '@crxjs/vite-plugin';
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'Vite React TS Chrome Extension',
+  name: 'AiChat-to-Notion',
   version: '0.1.0',
   icons: {
     128: 'src/assets/img/icon-128.png',
