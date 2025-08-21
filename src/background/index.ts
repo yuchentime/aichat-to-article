@@ -125,24 +125,29 @@ chrome.action.onClicked.addListener((tab) => {
   }
 });
 
-// 创建右键菜单
+// 创建右键菜单，仅在指定域名下显示
+const allowedHosts = ['chatgpt.com', 'www.chatgpt.com'];
 chrome.runtime.onInstalled.addListener(() => {
+  const documentUrlPatterns = allowedHosts.map(host => `*://${host}/*`);
   chrome.contextMenus.create({
     id: 'save_to_notion',
     title: 'Save to Notion',
     contexts: ['all'],
+    documentUrlPatterns,
   });
   chrome.contextMenus.create({
     id: 'save_directly',
     parentId: 'save_to_notion',
     title: 'Save directly',
     contexts: ['all'],
+    documentUrlPatterns,
   });
   chrome.contextMenus.create({
     id: 'generate_post',
     parentId: 'save_to_notion',
     title: 'Generate Post',
     contexts: ['all'],
+    documentUrlPatterns,
   });
 });
 
@@ -154,6 +159,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'direct' });
   }
 });
+
 
 chrome.runtime.onMessage.addListener(async (
   message: any,
