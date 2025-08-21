@@ -7,6 +7,7 @@ const allowedHosts = ['chatgpt.com', 'www.chatgpt.com'];
 if (allowedHosts.includes(location.hostname)) {
   // Listen for messages from the background script triggered by context menu
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse: (response?: any) => void) => {
+    console.log('Content script received message:', message);
     if (message?.type === 'saveToNotion') {
       const taskId = window.location.href.replace(/\/$/, '').split('/').pop();
       const messages: string[] = new ChatGptCollector().getAllMessages();
@@ -26,6 +27,9 @@ if (allowedHosts.includes(location.hostname)) {
         } else {
           alert(result?.error || 'Failed to add task to queue');
         }
+      }).catch(error => {
+        logger.content.error('Error sending message to background script', error);
+        alert('Failed to add task to queue: ' + (error.message || 'Unknown error'));
       });
       sendResponse({ ok: true });
       return true; // Keep message channel open for async response

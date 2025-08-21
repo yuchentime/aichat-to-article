@@ -1,4 +1,3 @@
-import { get } from 'http';
 import { generateArticle } from '../api/chatApi';
 import { logger } from '../lib/logger';
 
@@ -59,6 +58,15 @@ const getResult = async (id: string): Promise<string | null> => {
   }
 };
 
+const sendNotification = (title: string, message: string) => {
+    chrome.notifications.create({
+      type: "basic",
+      // iconUrl: "icon.png",
+      title,
+      message,
+      priority: 2
+    });
+}
 
 const runGenerateArticleTask = async (task: QueueTask) => {
   logger.background.info('开始执行任务', { taskId: task.id, action: task.action, domain: task.domain });
@@ -73,13 +81,18 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     }
     if (error) task.error = error;
     taskState.finished.push(task);
-    // todo 浏览器通知
-    
+
+    // 发送浏览器通知
+    if (result) {
+      sendNotification('任务完成', '文章已经生成，请打开SidePanel查看。');
+    } else if (error) {
+      sendNotification('任务失败', '任务执行失败。');
+    }
+
     logger.background.info('任务状态已更新为已完成', { taskId: task.id });
     await saveState();
     
     logger.background.info('发送队列进度消息', { task });
-    chrome.runtime.sendMessage({ type: 'queueProgress', task });
     
     processing = false;
     logger.background.info('继续处理队列中的下一个任务');
@@ -123,7 +136,6 @@ const processQueue = async () => {
   await saveState();
   
   logger.background.info('发送队列进度消息', { task });
-  chrome.runtime.sendMessage({ type: 'queueProgress', task });
 
   // 在 MV3 的扩展 Service Worker 中，创建 Web Worker 存在兼容性/权限限制。
   // 为保证稳定性，直接在 Service Worker 主线程执行任务。
