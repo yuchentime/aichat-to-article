@@ -47,7 +47,7 @@ body {
 }
 
 /* Ensure proper spacing in collapsed state */
-.line-clamp-3 .markdown-content > *:not(:nth-child(-n+3)) {
+.markdown-content.line-clamp-3 > *:nth-child(n+4) {
   display: none;
 }
 

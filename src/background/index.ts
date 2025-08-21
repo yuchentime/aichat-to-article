@@ -161,50 +161,59 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 
-chrome.runtime.onMessage.addListener(async (
+chrome.runtime.onMessage.addListener((
   message: any,
   sender: chrome.runtime.MessageSender,
-  sendResponse: (response: any) => void
-) => {
+  sendResponse: (response?: any) => void
+): boolean => {
+  const respond = (payload?: any) => (sendResponse as unknown as (response?: any) => void)(payload);
   if ((message as any)?.ping) {
-    console.log('[background] received ping from', sender.id, 'at', (message as any).ping);
-    sendResponse({ pong: Date.now() });
-    return true;
+    console.log('[background] received ping from', sender?.id, 'at', (message as any).ping);
+    respond({ pong: Date.now() });
+    return false;
   }
 
-  if (message?.type === 'queueGenerate') {
-    const { domain, messages, taskId, action } = message.payload || {};
+  if ((message as any)?.type === 'queueGenerate') {
+    const { domain, messages, taskId, action } = (message as any).payload || {};
     if (!domain || !messages || !Array.isArray(messages) || !taskId) {
-      sendResponse({ ok: false, error: 'Invalid payload' });
-      return true;
+      respond({ ok: false, error: 'Invalid payload' });
+      return false;
     }
     logger.background.info(`收到任务请求：${taskId}, 域名：${domain}, 消息数量：${messages.length}`);
     if (taskQueue.some(t => t.taskId === taskId)) {
       logger.background.warn(`任务已存在，跳过添加：${taskId}`);
-      sendResponse({ ok: false, error: 'Task already exists' });
-      return true;
+      respond({ ok: false, error: 'Task already exists' });
+      return false;
     }
 
-    const { apiConfig } = await chrome.storage.local.get('apiConfig');
-    let configs: any[] = [];
-    if (Array.isArray(apiConfig)) configs = apiConfig;
-    else if (apiConfig) configs = [apiConfig];
-    const current = configs.find(c => c.current_using) || configs[0] || {};
-    const task: QueueTask = {
-      id: `task-${Date.now()}`,
-      taskId,
-      action,
-      domain,
-      model: current.model || '',
-      status: 'pending',
-      messages,
-      synced: false,
-    };
-    taskQueue.push(task);
-    taskState.pending.push(task);
-    saveState();
-    processQueue();
-    sendResponse({ ok: true, id: taskId });
+    chrome.storage.local.get('apiConfig')
+      .then(({ apiConfig }) => {
+        let configs: any[] = [];
+        if (Array.isArray(apiConfig)) configs = apiConfig;
+        else if (apiConfig) configs = [apiConfig];
+        const current = configs.find((c: any) => c.current_using) || configs[0] || {};
+        const task: QueueTask = {
+          id: `task-${Date.now()}`,
+          taskId,
+          action,
+          domain,
+          model: current.model || '',
+          status: 'pending',
+          messages,
+          synced: false,
+        };
+        taskQueue.push(task);
+        taskState.pending.push(task);
+        saveState();
+        processQueue();
+        respond({ ok: true, id: taskId });
+      })
+      .catch((err) => {
+        logger.background.error('获取配置失败', err);
+        respond({ ok: false, error: String(err) });
+      });
+
+    // Return true to indicate we'll respond asynchronously
     return true;
   }
 
