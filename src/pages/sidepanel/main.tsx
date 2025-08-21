@@ -155,7 +155,8 @@ function hello() {
 
 ## 内联代码
 
-使用 \`npm install\` 命令安装依赖。`
+使用 \`npm install\` 命令安装依赖。`,
+            synced: false,
           },
           {
             id: 'sample-2',
@@ -188,7 +189,8 @@ sequenceDiagram
     B->>A: 显示结果
 \`\`\`
 
-这是一个包含 Mermaid 图表的示例任务。`
+这是一个包含 Mermaid 图表的示例任务。`,
+            synced: false,
           }
         ];
         setTasks(sampleTasks);
