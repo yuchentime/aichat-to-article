@@ -41,6 +41,7 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     if (result) task.result = result;
     if (error) task.error = error;
     taskState.finished.push(task);
+    // todo 浏览器通知
     
     logger.background.info('任务状态已更新为已完成', { taskId: task.id });
     await saveState();

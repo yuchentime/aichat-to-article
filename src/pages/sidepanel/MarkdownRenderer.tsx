@@ -30,7 +30,7 @@ const MermaidDiagram: React.FC<{ chart: string }> = ({ chart }) => {
         .catch((error) => {
           console.error('Mermaid rendering error:', error);
           if (ref.current) {
-            ref.current.innerHTML = `<pre><code>${chart}</code></pre>`;
+            ref.current.innerHTML = `<pre className="bg-gray-100"><code>${chart}</code></pre>`;
           }
         });
     }
@@ -94,10 +94,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
             <h2 className="text-lg font-semibold mb-2 text-gray-900 dark:text-gray-100">{children}</h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-base font-medium mb-1 text-gray-900 dark:text-gray-100">{children}</h3>
+            <h3 className="text-base font-semibold mb-1 text-gray-900 dark:text-gray-100">{children}</h3>
           ),
           h4: ({ children }) => (
-            <h4 className="text-sm font-medium mb-1 text-gray-900 dark:text-gray-100">{children}</h4>
+            <h4 className="text-sm font-semibold mb-1 text-gray-900 dark:text-gray-100">{children}</h4>
           ),
           p: ({ children }) => <p className="mb-2 leading-relaxed">{children}</p>,
           ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
