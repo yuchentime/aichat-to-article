@@ -9,7 +9,7 @@ if (allowedHosts.includes(location.hostname)) {
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === 'saveToNotion') {
       const taskId = window.location.href.replace(/\/$/, '').split('/').pop();
-      const messages = new ChatGptCollector().getAllMessages();
+      const messages: string[] = new ChatGptCollector().getAllMessages();
       logger.content.info('Collected messages', messages);
 
       chrome.runtime.sendMessage({

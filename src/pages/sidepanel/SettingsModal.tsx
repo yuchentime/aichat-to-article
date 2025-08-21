@@ -46,22 +46,45 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     }, []);
 
     const handleProviderChange = async (value: ApiConfig['provider']) => {
-        const { apiConfig } = await chrome.storage.local.get('apiConfig');
-        let configs: ApiConfig[] = [];
-        if (Array.isArray(apiConfig)) configs = apiConfig;
-        else if (apiConfig) configs = [apiConfig];
-        const existed = configs.find((c) => c.provider === value);
-        if (existed) {
-            const apiKey = existed.apiKey ? await decrypt(existed.apiKey) : '';
-            setConfig({
-                provider: existed.provider,
-                apiKey,
-                model: existed.model,
-                baseUrl: (existed as any).baseUrl ?? '',
-                current_using: existed.current_using ?? false,
-            });
-        } else {
-            setConfig({ provider: value, apiKey: '', model: '', baseUrl: '', current_using: false });
+        // Immediately reflect selection to avoid async lag/race causing dropdown to revert
+        setConfig((prev) => ({
+            ...prev,
+            provider: value,
+        }));
+
+        try {
+            const { apiConfig } = await chrome.storage.local.get('apiConfig');
+            let configs: ApiConfig[] = [];
+            if (Array.isArray(apiConfig)) configs = apiConfig;
+            else if (apiConfig) configs = [apiConfig];
+
+            const existed = configs.find((c) => c.provider === value);
+            if (existed) {
+                const apiKey = existed.apiKey ? await decrypt(existed.apiKey) : '';
+                setConfig((prev) => ({
+                    ...prev,
+                    provider: value,
+                    apiKey,
+                    model: existed.model || '',
+                    baseUrl: (existed as any).baseUrl ?? '',
+                    current_using: existed.current_using ?? false,
+                }));
+            } else {
+                setConfig((prev) => ({
+                    ...prev,
+                    provider: value,
+                    apiKey: '',
+                    model: '',
+                    baseUrl: '',
+                    current_using: false,
+                }));
+            }
+        } catch {
+            // Keep at least the selected provider
+            setConfig((prev) => ({
+                ...prev,
+                provider: value,
+            }));
         }
     };
 
@@ -91,8 +114,8 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <select
                         className="w-full border p-1 dark:bg-gray-700"
                         value={config.provider}
-                        onChange={async (e) => {
-                            await handleProviderChange(e.target.value as ApiConfig['provider']);
+                        onChange={(e) => {
+                            void handleProviderChange(e.target.value as ApiConfig['provider']);
                         }}
                     >
                         {providers.map((p) => (

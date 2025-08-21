@@ -4,8 +4,8 @@ export class ChatGptCollector implements MessageCollector {
  
     userPrefix = "##### You said:";
 
-    getAllMessages(): Message[] {
-        const messages: Message[] = [];
+    getAllMessages(): string[] {
+        const messages: string[] = [];
         const articleList = document.querySelectorAll("article");
         if (articleList.length === 0) {
             console.warn("No articles found on the page.");
@@ -14,11 +14,11 @@ export class ChatGptCollector implements MessageCollector {
         for (const article of articleList) {
             const content = html2md(article.innerHTML);
             // console.log(content);
-            const message: Message = {
-                role: content.includes(this.userPrefix) ? "user" : "assistant",
-                content,
-            }
-            messages.push(message);
+            // const message: Message = {
+            //     role: content.includes(this.userPrefix) ? "user" : "assistant",
+            //     content,
+            // }
+            messages.push(content);
         };
         return messages;
     }

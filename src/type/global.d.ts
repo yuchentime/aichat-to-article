@@ -5,7 +5,7 @@ interface Message {
 }
 
 interface MessageCollector {
-  getAllMessages(): Message[];
+  getAllMessages(): string[];
 }
 
 interface Task {

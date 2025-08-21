@@ -10,7 +10,7 @@ interface QueueTask {
   status: 'pending' | 'running' | 'finished';
   result?: string;
   error?: string;
-  messages: Message[];
+  messages: string[];
   synced: boolean;
 }
 
@@ -37,7 +37,8 @@ const runTask = async (task: QueueTask): Promise<string> => {
     let result: string;
     if (task.action === 'generate') {
       logger.background.info('调用生成函数', { domain: task.domain });
-      result = await generateArticle(JSON.stringify(task.messages));
+      const userInput = task.messages.join('\n');
+      result = await generateArticle(userInput);
       logger.background.info('生成函数执行完成', { resultLength: result.length });
       logger.background.info('生成结果: ', result);
       task.result = result;
