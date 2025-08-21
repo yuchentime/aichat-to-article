@@ -7,14 +7,27 @@ interface ApiConfig {
     apiKey: string;
     model: string;
     baseUrl?: string;
+    current_using?: boolean;
 }
 
 const getConfig = async (): Promise<ApiConfig> => {
     const { apiConfig } = await chrome.storage.local.get('apiConfig');
-    if (apiConfig?.apiKey) {
-        apiConfig.apiKey = await decrypt(apiConfig.apiKey);
+    let configs: ApiConfig[] = [];
+    if (Array.isArray(apiConfig)) configs = apiConfig;
+    else if (apiConfig) configs = [apiConfig];
+    const current = configs.find((c) => c.current_using) || configs[0];
+    if (current?.apiKey) {
+        current.apiKey = await decrypt(current.apiKey);
     }
-    return apiConfig || { provider: 'grok', apiKey: '', model: 'grok-4-0709', baseUrl: '' };
+    return (
+        current || {
+            provider: 'grok',
+            apiKey: '',
+            model: 'grok-4-0709',
+            baseUrl: '',
+            current_using: true,
+        }
+    );
 };
 
 const request = async (messages: any[]): Promise<string> => {

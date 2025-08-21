@@ -6,6 +6,7 @@ interface ApiConfig {
     apiKey: string;
     model: string;
     baseUrl: string;
+    current_using?: boolean;
 }
 
 const providers = [
@@ -21,27 +22,63 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         apiKey: '',
         model: '',
         baseUrl: '',
+        current_using: false,
     });
 
     useEffect(() => {
         (async () => {
             const { apiConfig } = await chrome.storage.local.get('apiConfig');
-            if (apiConfig) {
-                const apiKey = apiConfig.apiKey ? await decrypt(apiConfig.apiKey) : '';
-                setConfig((prev) => ({
-                    ...prev,
-                    ...apiConfig,
+            let configs: ApiConfig[] = [];
+            if (Array.isArray(apiConfig)) configs = apiConfig;
+            else if (apiConfig) configs = [apiConfig];
+            if (configs.length) {
+                const first = configs[0];
+                const apiKey = first.apiKey ? await decrypt(first.apiKey) : '';
+                setConfig({
+                    provider: first.provider,
                     apiKey,
-                    baseUrl: (apiConfig as any).baseUrl ?? '',
-                }));
+                    model: first.model,
+                    baseUrl: (first as any).baseUrl ?? '',
+                    current_using: first.current_using ?? false,
+                });
             }
         })();
     }, []);
 
+    const handleProviderChange = async (value: ApiConfig['provider']) => {
+        const { apiConfig } = await chrome.storage.local.get('apiConfig');
+        let configs: ApiConfig[] = [];
+        if (Array.isArray(apiConfig)) configs = apiConfig;
+        else if (apiConfig) configs = [apiConfig];
+        const existed = configs.find((c) => c.provider === value);
+        if (existed) {
+            const apiKey = existed.apiKey ? await decrypt(existed.apiKey) : '';
+            setConfig({
+                provider: existed.provider,
+                apiKey,
+                model: existed.model,
+                baseUrl: (existed as any).baseUrl ?? '',
+                current_using: existed.current_using ?? false,
+            });
+        } else {
+            setConfig({ provider: value, apiKey: '', model: '', baseUrl: '', current_using: false });
+        }
+    };
+
     const handleSave = async () => {
         const encrypted = config.apiKey ? await encrypt(config.apiKey) : '';
         const toSave = { ...config, apiKey: encrypted };
-        await chrome.storage.local.set({ apiConfig: toSave });
+        const { apiConfig } = await chrome.storage.local.get('apiConfig');
+        let configs: ApiConfig[] = [];
+        if (Array.isArray(apiConfig)) configs = apiConfig;
+        else if (apiConfig) configs = [apiConfig];
+        const index = configs.findIndex((c) => c.provider === config.provider);
+        if (index >= 0) configs[index] = { ...configs[index], ...toSave };
+        else configs.push(toSave);
+        if (!configs.some((c) => c.current_using)) {
+            configs[0].current_using = true;
+        }
+        await chrome.storage.local.set({ apiConfig: configs });
         onClose();
     };
 
@@ -54,9 +91,9 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <select
                         className="w-full border p-1 dark:bg-gray-700"
                         value={config.provider}
-                        onChange={(e) =>
-                            setConfig({ ...config, provider: e.target.value as ApiConfig['provider'] })
-                        }
+                        onChange={async (e) => {
+                            await handleProviderChange(e.target.value as ApiConfig['provider']);
+                        }}
                     >
                         {providers.map((p) => (
                             <option key={p.value} value={p.value}>

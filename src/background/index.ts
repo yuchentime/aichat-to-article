@@ -3,8 +3,10 @@ import { logger } from '../lib/logger';
 
 interface QueueTask {
   id: string;
+  taskId: string;
   action: 'generate' | 'summary';
   domain: string;
+  model: string;
   status: 'pending' | 'running' | 'finished';
   result?: string;
   error?: string;
@@ -122,7 +124,7 @@ chrome.action.onClicked.addListener((tab) => {
   }
 });
 
-chrome.runtime.onMessage.addListener((
+chrome.runtime.onMessage.addListener(async (
   message: any,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: any) => void
@@ -145,12 +147,18 @@ chrome.runtime.onMessage.addListener((
       sendResponse({ ok: false, error: 'Task already exists' });
       return true;
     }
-    
+
+    const { apiConfig } = await chrome.storage.local.get('apiConfig');
+    let configs: any[] = [];
+    if (Array.isArray(apiConfig)) configs = apiConfig;
+    else if (apiConfig) configs = [apiConfig];
+    const current = configs.find(c => c.current_using) || configs[0] || {};
     const task: QueueTask = {
       id: `task-${Date.now()}`,
       taskId,
       action,
       domain,
+      model: current.model || '',
       status: 'pending',
       messages
     };
