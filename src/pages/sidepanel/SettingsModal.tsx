@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { encrypt, decrypt } from '../../lib/crypto';
 
 interface ApiConfig {
     provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -23,19 +24,25 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     });
 
     useEffect(() => {
-        chrome.storage.local.get('apiConfig').then(({ apiConfig }) => {
+        (async () => {
+            const { apiConfig } = await chrome.storage.local.get('apiConfig');
             if (apiConfig) {
+                const apiKey = apiConfig.apiKey ? await decrypt(apiConfig.apiKey) : '';
                 setConfig((prev) => ({
                     ...prev,
                     ...apiConfig,
+                    apiKey,
                     baseUrl: (apiConfig as any).baseUrl ?? '',
                 }));
             }
-        });
+        })();
     }, []);
 
-    const handleSave = () => {
-        chrome.storage.local.set({ apiConfig: config }).then(onClose);
+    const handleSave = async () => {
+        const encrypted = config.apiKey ? await encrypt(config.apiKey) : '';
+        const toSave = { ...config, apiKey: encrypted };
+        await chrome.storage.local.set({ apiConfig: toSave });
+        onClose();
     };
 
     return (
