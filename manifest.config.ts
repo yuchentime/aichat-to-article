@@ -26,10 +26,10 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ['http://*/*', 'https://*/*'],
+      matches: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*'],
       js: ['src/content/index.tsx']
     }
   ],
   permissions: ['sidePanel', 'storage'],
-  host_permissions: ['http://*/*', 'https://*/*']
+  host_permissions: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*']
 } as any);
