@@ -2,17 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-/* App globals */
+/* CSS 变量定义 */
 :root {
   color-scheme: light dark;
+  
+  /* 状态颜色 */
+  --color-status-completed: 16 185 129;
+  --color-status-running: 59 130 246;
+  --color-status-pending: 245 158 11;
+  --color-status-error: 239 68 68;
+  
+  /* 同步状态 */
+  --color-sync-success: 16 185 129;
+  --color-sync-pending: 107 114 128;
 }
 
+/* 基础样式 */
 html, body, #root {
   height: 100%;
 }
 
 body {
-  @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+  @apply bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 }
@@ -38,12 +49,46 @@ body {
   @apply max-w-full h-auto;
 }
 
-/* Fix line-clamp for markdown content */
-.line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* 自定义工具类 */
+@layer utilities {
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .text-status-completed {
+    color: rgb(var(--color-status-completed));
+  }
+  
+  .text-status-running {
+    color: rgb(var(--color-status-running));
+  }
+  
+  .text-status-pending {
+    color: rgb(var(--color-status-pending));
+  }
+  
+  .text-status-error {
+    color: rgb(var(--color-status-error));
+  }
+  
+  .bg-status-completed\/10 {
+    background-color: rgb(var(--color-status-completed) / 0.1);
+  }
+  
+  .bg-status-running\/10 {
+    background-color: rgb(var(--color-status-running) / 0.1);
+  }
+  
+  .bg-status-pending\/10 {
+    background-color: rgb(var(--color-status-pending) / 0.1);
+  }
+  
+  .bg-status-error\/10 {
+    background-color: rgb(var(--color-status-error) / 0.1);
+  }
 }
 
 /* Ensure proper spacing in collapsed state */
@@ -57,4 +102,21 @@ body {
   -webkit-line-clamp: unset;
   -webkit-box-orient: unset;
   overflow: visible;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
 }

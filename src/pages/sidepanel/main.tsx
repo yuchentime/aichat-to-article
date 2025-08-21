@@ -196,69 +196,110 @@ function SidePanelApp() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen p-4 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <div className="flex items-center gap-3 my-2">
-        <img src={logo} alt="Logo" className="w-8 h-8" />
-        <h1 className="text-xl font-bold">任务列表</h1>
-        <button
-          className="ml-auto text-sm text-blue-600 hover:underline"
-          onClick={() => setShowSettings(true)}
-        >
-          设置
-        </button>
-      </div>
-
-      {apiConfigs.length > 0 && (
-        <div className="space-y-2 text-sm my-2">
-          <label className="block">API Provider</label>
-          <select
-            className="w-full border p-1 dark:bg-gray-700"
-            value={currentProvider}
-            onChange={(e) => handleProviderChange(e.target.value)}
+    <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* 顶部导航栏 */}
+      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Logo" className="w-8 h-8" />
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              任务列表
+            </h1>
+          </div>
+          <button
+            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            onClick={() => setShowSettings(true)}
+            aria-label="打开设置"
           >
-            {apiConfigs.map((c) => (
-              <option key={c.provider} value={c.provider}>
-                {c.provider}{c.model ? ` (${c.model})` : ''}
-              </option>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      {/* 控制面板 */}
+      <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+        {/* API Provider 选择器 */}
+        {apiConfigs.length > 0 && (
+          <div className="mb-3">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              API Provider
+            </label>
+            <select
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              value={currentProvider}
+              onChange={(e) => handleProviderChange(e.target.value)}
+            >
+              {apiConfigs.map((c) => (
+                <option key={c.provider} value={c.provider}>
+                  {c.provider}{c.model ? ` (${c.model})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* 任务状态统计 */}
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-status-pending rounded-full"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              待处理: <span className="font-medium">{pendingCount}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-status-running rounded-full"></div>
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              进行中: <span className="font-medium">{runningCount}</span>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* 任务列表 */}
+      <main className="flex-1 p-4">
+        {tasks.length > 0 ? (
+          <div className="space-y-4">
+            {tasks.map((task) => (
+              <ResultItem
+                key={task.id}
+                task={task}
+                onDelete={deleteTask}
+                onViewResult={handleViewResult}
+              />
             ))}
-          </select>
-        </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              暂无已完成任务
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400">
+              完成的任务将在这里显示
+            </p>
+          </div>
+        )}
+      </main>
+
+      {/* 模态框 */}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showResultModal && selectedTask && (
+        <ResultModal
+          id={selectedTask.id}
+          isOpen={showResultModal}
+          onClose={handleCloseResultModal}
+          title={selectedTask.domain}
+        />
       )}
-
-      {/* 任务状态统计 */}
-      <div className="flex gap-4 text-sm my-2">
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
-          <span className="text-gray-600 dark:text-gray-400">待处理: {pendingCount}</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-          <span className="text-gray-600 dark:text-gray-400">进行中: {runningCount}</span>
-        </div>
-      </div>
-
-     <ul className="space-y-2 my-2">
-       {tasks.map((task) => (
-         <ResultItem
-           key={task.id}
-           task={task}
-           onDelete={deleteTask}
-           onViewResult={handleViewResult}
-         />
-       ))}
-       {!tasks.length && <li className="text-sm text-gray-500">暂无已完成任务</li>}
-     </ul>
-     {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
-     {showResultModal && selectedTask && (
-       <ResultModal
-         id={selectedTask.id}
-         isOpen={showResultModal}
-         onClose={handleCloseResultModal}
-         title={`${selectedTask.domain}`}
-       />
-     )}
-   </div>
- );
+    </div>
+  );
 }
 
 const container = document.getElementById('root')!;
