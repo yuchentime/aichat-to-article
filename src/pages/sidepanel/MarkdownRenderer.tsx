@@ -50,7 +50,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
             console.log('当前内容行是：', { children, className, inline, match });
             if (children?.toString().includes('\n')) {
               return (
-                <pre className="w-full bg-gray-100 p-2">
+                <pre className="w-full bg-gray-100 p-2 my-2">
                   <code
                     className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono"
                     {...props}
