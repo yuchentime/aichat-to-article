@@ -1,5 +1,6 @@
 import { ARTICLE_SYSTEM_PROMPT } from '../prompts/article_prompt';
 import commonRequest from '../lib/commonRequest';
+import { decrypt } from '../lib/crypto';
 
 interface ApiConfig {
     provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -10,6 +11,9 @@ interface ApiConfig {
 
 const getConfig = async (): Promise<ApiConfig> => {
     const { apiConfig } = await chrome.storage.local.get('apiConfig');
+    if (apiConfig?.apiKey) {
+        apiConfig.apiKey = await decrypt(apiConfig.apiKey);
+    }
     return apiConfig || { provider: 'grok', apiKey: '', model: 'grok-4-0709', baseUrl: '' };
 };
 
