@@ -6,7 +6,7 @@ interface ApiConfig {
     apiKey: string;
     model: string;
     baseUrl: string;
-    current_using?: boolean;
+    currentUsing?: boolean;
 }
 
 const providers = [
@@ -22,7 +22,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         apiKey: '',
         model: '',
         baseUrl: '',
-        current_using: false,
+        currentUsing: false,
     });
 
     useEffect(() => {
@@ -39,7 +39,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     apiKey,
                     model: first.model,
                     baseUrl: (first as any).baseUrl ?? '',
-                    current_using: first.current_using ?? false,
+                    currentUsing: first.currentUsing ?? false,
                 });
             }
         })();
@@ -67,7 +67,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     apiKey,
                     model: existed.model || '',
                     baseUrl: (existed as any).baseUrl ?? '',
-                    current_using: existed.current_using ?? false,
+                    currentUsing: existed.currentUsing ?? false,
                 }));
             } else {
                 setConfig((prev) => ({
@@ -76,7 +76,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     apiKey: '',
                     model: '',
                     baseUrl: '',
-                    current_using: false,
+                    currentUsing: false,
                 }));
             }
         } catch {
@@ -98,8 +98,8 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         const index = configs.findIndex((c) => c.provider === config.provider);
         if (index >= 0) configs[index] = { ...configs[index], ...toSave };
         else configs.push(toSave);
-        if (!configs.some((c) => c.current_using)) {
-            configs[0].current_using = true;
+        if (!configs.some((c) => c.currentUsing)) {
+            configs[0].currentUsing = true;
         }
         await chrome.storage.local.set({ apiConfig: configs });
         onClose();

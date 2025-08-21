@@ -11,7 +11,7 @@ interface ApiConfig {
   model: string;
   apiKey?: string;
   baseUrl?: string;
-  current_using?: boolean;
+  currentUsing?: boolean;
 }
 
 function SidePanelApp() {
@@ -62,7 +62,7 @@ function SidePanelApp() {
   };
 
   const handleProviderChange = async (provider: string) => {
-    const updated = apiConfigs.map(c => ({ ...c, current_using: c.provider === provider }));
+    const updated = apiConfigs.map(c => ({ ...c, currentUsing: c.provider === provider }));
     setApiConfigs(updated);
     setCurrentProvider(provider);
     await chrome.storage.local.set({ apiConfig: updated });
@@ -89,7 +89,7 @@ function SidePanelApp() {
 
       logger.sidepanel.info('从 chrome.storage.local 获取到的任务列表', stored);
       setApiConfigs(configs);
-      const current = configs.find(c => c.current_using) || configs[0];
+      const current = configs.find(c => c.currentUsing) || configs[0];
       setCurrentProvider(current ? current.provider : '');
       
       // 只显示已完成的任务
@@ -231,7 +231,7 @@ sequenceDiagram
         if (changes.apiConfig) {
           const list = changes.apiConfig.newValue || [];
           setApiConfigs(list);
-          const current = list.find((c: ApiConfig) => c.current_using) || list[0];
+          const current = list.find((c: ApiConfig) => c.currentUsing) || list[0];
           setCurrentProvider(current ? current.provider : '');
         }
       }

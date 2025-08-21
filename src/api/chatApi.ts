@@ -7,7 +7,7 @@ interface ApiConfig {
     apiKey: string;
     model: string;
     baseUrl?: string;
-    current_using?: boolean;
+    currentUsing?: boolean;
 }
 
 const getConfig = async (): Promise<ApiConfig> => {
@@ -15,7 +15,7 @@ const getConfig = async (): Promise<ApiConfig> => {
     let configs: ApiConfig[] = [];
     if (Array.isArray(apiConfig)) configs = apiConfig;
     else if (apiConfig) configs = [apiConfig];
-    const current = configs.find((c) => c.current_using) || configs[0];
+    const current = configs.find((c) => c.currentUsing) || configs[0];
     if (current?.apiKey) {
         current.apiKey = await decrypt(current.apiKey);
     }
@@ -25,7 +25,7 @@ const getConfig = async (): Promise<ApiConfig> => {
             apiKey: '',
             model: 'grok-4-0709',
             baseUrl: '',
-            current_using: true,
+            currentUsing: true,
         }
     );
 };

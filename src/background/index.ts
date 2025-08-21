@@ -155,9 +155,9 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab || typeof tab.id === 'undefined') return;
   if (info.menuItemId === 'generate_post') {
-    chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'generate' });
+    chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'generateArticle' });
   } else if (info.menuItemId === 'save_directly') {
-    chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'direct' });
+    chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'directSave' });
   }
 });
 
@@ -174,7 +174,7 @@ chrome.runtime.onMessage.addListener((
     return false;
   }
 
-  if ((message as any)?.type === 'queueGenerate') {
+  if ((message as any)?.action === 'generateArticle') {
     const { domain, messages, taskId, action } = (message as any).payload || {};
     if (!domain || !messages || !Array.isArray(messages) || !taskId) {
       respond({ ok: false, error: 'Invalid payload' });
@@ -192,7 +192,7 @@ chrome.runtime.onMessage.addListener((
         let configs: any[] = [];
         if (Array.isArray(apiConfig)) configs = apiConfig;
         else if (apiConfig) configs = [apiConfig];
-        const current = configs.find((c: any) => c.current_using) || configs[0] || {};
+        const current = configs.find((c: any) => c.currentUsing) || configs[0] || {};
         const task: QueueTask = {
           id: `task-${Date.now()}`,
           taskId,
@@ -215,6 +215,9 @@ chrome.runtime.onMessage.addListener((
       });
 
     // Return true to indicate we'll respond asynchronously
+    return true;
+  } else if ((message as any)?.type === 'directSave') {
+
     return true;
   }
 
