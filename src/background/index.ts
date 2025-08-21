@@ -1,3 +1,4 @@
+import { get } from 'http';
 import { generateArticle } from '../api/chatApi';
 import { logger } from '../lib/logger';
 
@@ -29,8 +30,35 @@ const saveState = async () => {
   await chrome.storage.local.set({ tasks: taskState });
   logger.background.info('任务状态已保存到存储');
 };
+// 保存：以变量 id 作为键名；用 try/catch 让调用方能 await/捕获错误
+const saveResult = async (id: string, result: string): Promise<void> => {
+  logger.background.info('保存任务结果', { id, result });
+  try {
+    await chrome.storage.local.set({ [id]: result });
+    logger.background.info('任务结果已保存到存储', { id });
+  } catch (error) {
+    logger.background.error('保存任务结果失败', { id, error: String(error) });
+    throw error; // 让调用方可感知失败
+  }
+};
 
-// const check
+// 读取：区分“未找到”和“空字符串”；并捕获异常
+const getResult = async (id: string): Promise<string | null> => {
+  logger.background.info('获取任务结果', { id });
+  try {
+    const stored = await chrome.storage.local.get(id); // 形如 { [id]: value } 或 {}
+    if (Object.prototype.hasOwnProperty.call(stored, id)) {
+      logger.background.info('任务结果已从存储中获取', { id });
+      return stored[id] as string; // 可能是空字符串 ""
+    }
+    logger.background.warn('未找到任务结果', { id });
+    return null;
+  } catch (error) {
+    logger.background.error('读取任务结果失败', { id, error: String(error) });
+    return null; // 或者选择 throw，让上层处理
+  }
+};
+
 
 const runGenerateArticleTask = async (task: QueueTask) => {
   logger.background.info('开始执行任务', { taskId: task.id, action: task.action, domain: task.domain });
@@ -41,7 +69,7 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     task.status = 'finished';
     if (result) {
       task.summary = result.slice(0, 200); // 简单摘要，实际可用更复杂的逻辑
-      task.result = result;
+      saveResult(task.id, result);
     }
     if (error) task.error = error;
     taskState.finished.push(task);
@@ -178,12 +206,38 @@ chrome.runtime.onMessage.addListener((
       return false;
     }
     logger.background.info(`收到任务请求：${taskId}, 域名：${domain}, 消息数量：${messages.length}`);
-    if (taskQueue.some(t => t.taskId === taskId)) {
+    if (taskQueue.some(t => t.taskId === taskId && (t.status === 'pending' || t.status === 'running'))) {
       logger.background.warn(`任务已存在，跳过添加：${taskId}`);
       respond({ ok: false, error: 'Task already exists' });
       return false;
     }
 
+    submitTask(domain, messages, taskId, 'generateArticle', respond);
+
+    // Return true to indicate we'll respond asynchronously
+    return true;
+  } else if ((message as any)?.action === 'directSave') {
+
+    return true;
+  } else if((message as any)?.type === 'getResultById') {
+    getResult((message as any).id).then((result) => {
+      if (result) {
+        respond({ ok: true, result });
+      } else {
+        respond({ ok: false, error: 'Result not found' });
+      }
+    }).catch((error) => {
+      logger.background.error('获取结果失败', { id: (message as any).id, error: String(error) });
+      respond({ ok: false, error: String(error) });
+    });
+    return true; // Keep message channel open for async response
+  }
+
+  return false;
+});
+
+const submitTask = async (domain: string, messages: string[], taskId: string
+  , action: 'generateArticle' | 'directSave', respond: any) => {
     chrome.storage.local.get('apiConfig')
       .then(({ apiConfig }) => {
         logger.background.info('获取API配置', { apiConfig });
@@ -216,13 +270,4 @@ chrome.runtime.onMessage.addListener((
         logger.background.error('获取配置失败', err);
         respond({ ok: false, error: String(err) });
       });
-
-    // Return true to indicate we'll respond asynchronously
-    return true;
-  } else if ((message as any)?.type === 'directSave') {
-
-    return true;
-  }
-
-  return false;
-});
+}

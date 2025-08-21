@@ -55,14 +55,12 @@ const ResultItem: React.FC<ResultItemProps> = ({
         <div className="text-sm text-gray-700 dark:text-gray-300 p-3 bg-gray-50 dark:bg-gray-700 rounded">
           {task.summary}
         </div>
-        {task.result && (
-          <button
-            className="text-blue-600 hover:underline text-xs mt-1"
-            onClick={handleViewResult}
-          >
-            查看
-          </button>
-        )}
+        <button
+          className="text-blue-600 hover:underline text-xs mt-1"
+          onClick={handleViewResult}
+        >
+          查看
+        </button>
       </div>
     </li>
   );

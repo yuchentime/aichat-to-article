@@ -2,18 +2,38 @@ import React from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
 
 type ResultModalProps = {
+  id: string,
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  content: string;
 };
 
 const ResultModal: React.FC<ResultModalProps> = ({
+  id,
   isOpen,
   onClose,
   title,
-  content,
 }) => {
+  const [content, setContent] = React.useState<string>('');
+
+    React.useEffect(() => {
+        if (isOpen) {
+            chrome.runtime.sendMessage({
+                type: 'getResultById',
+                id
+            }).then((response: any) => {
+                console.log('获取结果响应:', response);
+                if (response?.ok) {
+                    setContent(response.result || '');
+                } else {
+                    console.error('获取结果失败:', response?.error || '未知错误');
+                }
+            }).catch((error: any) => {
+                console.error('发送消息失败:', error);
+            });
+        }
+    }, [isOpen]);
+
   if (!isOpen) return null;
 
   return (

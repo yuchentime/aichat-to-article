@@ -255,10 +255,10 @@ function SidePanelApp() {
      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
      {showResultModal && selectedTask && (
        <ResultModal
+         id={selectedTask.id}
          isOpen={showResultModal}
          onClose={handleCloseResultModal}
-         title={`${selectedTask.status} · ${selectedTask.domain}`}
-         content={selectedTask.result || ''}
+         title={`${selectedTask.domain}`}
        />
      )}
    </div>
