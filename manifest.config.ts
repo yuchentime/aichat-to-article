@@ -24,6 +24,9 @@ export default defineManifest({
     service_worker: 'src/background/index.ts',
     type: 'module'
   },
+  content_security_policy: {
+    extension_pages: "script-src 'self'; object-src 'self';"
+  },
   content_scripts: [
     {
       matches: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*'],
