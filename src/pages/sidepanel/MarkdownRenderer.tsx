@@ -1,43 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import mermaid from 'mermaid';
-
-// Initialize mermaid
-mermaid.initialize({
-  startOnLoad: true,
-  theme: 'default',
-  securityLevel: 'loose',
-});
-
+import MermaidDiagram from './MermaidDiagram';
 // Custom component for Mermaid diagrams
-const MermaidDiagram: React.FC<{ chart: string }> = ({ chart }) => {
-  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (ref.current) {
-      mermaid
-        .render(`mermaid-${Date.now()}`, chart)
-        .then((result) => {
-          if (ref.current) {
-            ref.current.innerHTML = result.svg;
-          }
-        })
-        .catch((error) => {
-          console.error('Mermaid rendering error:', error);
-          if (ref.current) {
-            ref.current.innerHTML = `<pre><code>${chart}</code></pre>`;
-          }
-        });
-    }
-  }, [chart]);
-
-  return <div ref={ref} className="mermaid-diagram my-4" />;
-};
 
 const schema = {
   ...defaultSchema,
@@ -76,6 +46,19 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
                   {String(children).replace(/\n$/, '')}
                 </SyntaxHighlighter>
               );
+            }
+            console.log('当前内容行是：', { children, className, inline, match });
+            if (children?.toString().includes('\n')) {
+              return (
+                <pre className="w-full bg-gray-100 p-2">
+                  <code
+                    className="bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded text-sm font-mono"
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                </pre>
+              )
             }
 
             return (
