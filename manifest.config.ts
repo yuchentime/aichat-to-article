@@ -9,8 +9,8 @@ export default defineManifest({
     34: 'src/assets/img/icon-34.png'
   },
   action: {
-    default_title: 'Vite React TS',
-    default_popup: 'src/pages/popup/index.html',
+    // default_title: 'Vite React TS',
+    // default_popup: 'src/pages/popup/index.html',
     default_icon: {
       34: 'src/assets/img/icon-34.png',
       128: 'src/assets/img/icon-128.png'
@@ -29,10 +29,10 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*'],
+      matches: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*', 'http://localhost:5173/*'],
       js: ['src/content/index.tsx']
     }
   ],
   permissions: ['sidePanel', 'storage', 'contextMenus'],
-  host_permissions: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*']
+  host_permissions: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*', 'http://localhost:5173/*']
 } as any);

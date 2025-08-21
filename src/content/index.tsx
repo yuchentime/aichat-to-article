@@ -13,15 +13,20 @@ if (allowedHosts.includes(location.hostname)) {
       logger.content.info('Collected messages', messages);
 
       chrome.runtime.sendMessage({
-        type: 'queueGenerate',
+        action: message.action,
         payload: {
           domain: location.hostname,
           messages,
-          taskId,
-          action: message.action || 'generate',
+          taskId
         },
+      }).then((result) => {
+        logger.content.info('Message sent to background script', result);
+        if (result?.ok) {
+          alert('Task added to queue');
+        } else {
+          alert(result?.error || 'Failed to add task to queue');
+        }
       });
-      alert('Task added to queue');
       sendResponse({ ok: true });
     }
   });

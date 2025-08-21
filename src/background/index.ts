@@ -4,7 +4,7 @@ import { logger } from '../lib/logger';
 interface QueueTask {
   id: string;
   taskId: string;
-  action: 'generate' | 'summary';
+  action: 'generateArticle' | 'directSave';
   domain: string;
   model: string;
   status: 'pending' | 'running' | 'finished';
@@ -31,28 +31,40 @@ const saveState = async () => {
 
 // const check
 
-const runTask = async (task: QueueTask): Promise<string> => {
+const runGenerateArticleTask = async (task: QueueTask) => {
   logger.background.info('开始执行任务', { taskId: task.id, action: task.action, domain: task.domain });
+  
+  const finalize = async (result?: string, error?: string) => {
+    logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
+    taskState.running = taskState.running.filter(t => t.id !== task.id);
+    task.status = 'finished';
+    if (result) task.result = result;
+    if (error) task.error = error;
+    taskState.finished.push(task);
+    
+    logger.background.info('任务状态已更新为已完成', { taskId: task.id });
+    await saveState();
+    
+    logger.background.info('发送队列进度消息', { task });
+    chrome.runtime.sendMessage({ type: 'queueProgress', task });
+    
+    processing = false;
+    logger.background.info('继续处理队列中的下一个任务');
+    processQueue();
+  };
+
   try {
-    let result: string;
-    if (task.action === 'generate') {
-      logger.background.info('调用生成函数', { domain: task.domain });
-      const userInput = task.messages.join('\n');
-      result = await generateArticle(userInput);
-      logger.background.info('生成函数执行完成', { resultLength: result.length });
-      logger.background.info('生成结果: ', result);
-      task.result = result;
-      task.status = 'finished';
-      saveState();
-    } else {
-      throw new Error(`未知任务类型: ${task.action}`);
-    }
+    logger.background.info('调用生成函数', { domain: task.domain });
+    const userInput = task.messages.join('\n');
+    let result = await generateArticle(userInput);
+    logger.background.info('生成结果: ', result);
+    finalize(result);
     logger.background.info('任务执行成功', { taskId: task.id });
-    return result;
   } catch (e) {
     logger.background.error('任务执行错误', { taskId: task.id, error: e });
     throw e;
   }
+
 };
 
 const processQueue = async () => {
@@ -80,33 +92,12 @@ const processQueue = async () => {
   logger.background.info('发送队列进度消息', { task });
   chrome.runtime.sendMessage({ type: 'queueProgress', task });
 
-  const finalize = async (result?: string, error?: string) => {
-    logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
-    taskState.running = taskState.running.filter(t => t.id !== task.id);
-    task.status = 'finished';
-    if (result) task.result = result;
-    if (error) task.error = error;
-    taskState.finished.push(task);
-    
-    logger.background.info('任务状态已更新为已完成', { taskId: task.id });
-    await saveState();
-    
-    logger.background.info('发送队列进度消息', { task });
-    chrome.runtime.sendMessage({ type: 'queueProgress', task });
-    
-    processing = false;
-    logger.background.info('继续处理队列中的下一个任务');
-    processQueue();
-  };
-
   // 在 MV3 的扩展 Service Worker 中，创建 Web Worker 存在兼容性/权限限制。
   // 为保证稳定性，直接在 Service Worker 主线程执行任务。
-  try {
-    const result = await runTask(task);
-    await finalize(result);
-  } catch (err) {
-    logger.background.error('主线程执行任务失败', err);
-    await finalize(undefined, String(err));
+  if (task.action === 'generateArticle') {
+    runGenerateArticleTask(task);
+  } else if (task.action === 'directSave') {
+
   }
 };
 
@@ -167,15 +158,16 @@ chrome.runtime.onMessage.addListener((
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void
 ): boolean => {
+  logger.background.info('收到消息', message);
   const respond = (payload?: any) => (sendResponse as unknown as (response?: any) => void)(payload);
   if ((message as any)?.ping) {
     console.log('[background] received ping from', sender?.id, 'at', (message as any).ping);
     respond({ pong: Date.now() });
     return false;
   }
-
-  if ((message as any)?.action === 'generateArticle') {
-    const { domain, messages, taskId, action } = (message as any).payload || {};
+  const action = (message as any)?.action
+  if (action === 'generateArticle') {
+    const { domain, messages, taskId } = (message as any).payload || {};
     if (!domain || !messages || !Array.isArray(messages) || !taskId) {
       respond({ ok: false, error: 'Invalid payload' });
       return false;
@@ -189,6 +181,12 @@ chrome.runtime.onMessage.addListener((
 
     chrome.storage.local.get('apiConfig')
       .then(({ apiConfig }) => {
+        logger.background.info('获取API配置', { apiConfig });
+        if (!apiConfig || (Array.isArray(apiConfig) && apiConfig.length === 0)) {
+          logger.background.error('没有可用的API配置');
+          respond({ ok: false, error: 'No API configuration available' });
+          return;
+        }
         let configs: any[] = [];
         if (Array.isArray(apiConfig)) configs = apiConfig;
         else if (apiConfig) configs = [apiConfig];
