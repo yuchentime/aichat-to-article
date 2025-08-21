@@ -11,6 +11,7 @@ interface QueueTask {
   result?: string;
   error?: string;
   messages: Message[];
+  synced: boolean;
 }
 
 const taskQueue: QueueTask[] = [];
@@ -124,6 +125,41 @@ chrome.action.onClicked.addListener((tab) => {
   }
 });
 
+// 创建右键菜单，仅在指定域名下显示
+const allowedHosts = ['chatgpt.com', 'www.chatgpt.com'];
+chrome.runtime.onInstalled.addListener(() => {
+  const documentUrlPatterns = allowedHosts.map(host => `*://${host}/*`);
+  chrome.contextMenus.create({
+    id: 'save_to_notion',
+    title: 'Save to Notion',
+    contexts: ['all'],
+    documentUrlPatterns,
+  });
+  chrome.contextMenus.create({
+    id: 'save_directly',
+    parentId: 'save_to_notion',
+    title: 'Save directly',
+    contexts: ['all'],
+    documentUrlPatterns,
+  });
+  chrome.contextMenus.create({
+    id: 'generate_post',
+    parentId: 'save_to_notion',
+    title: 'Generate Post',
+    contexts: ['all'],
+    documentUrlPatterns,
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (!tab || typeof tab.id === 'undefined') return;
+  if (info.menuItemId === 'generate_post') {
+    chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'generate' });
+  } else if (info.menuItemId === 'save_directly') {
+    chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'direct' });
+  }
+});
+
 chrome.runtime.onMessage.addListener(async (
   message: any,
   sender: chrome.runtime.MessageSender,
@@ -160,7 +196,8 @@ chrome.runtime.onMessage.addListener(async (
       domain,
       model: current.model || '',
       status: 'pending',
-      messages
+      messages,
+      synced: false,
     };
     taskQueue.push(task);
     taskState.pending.push(task);

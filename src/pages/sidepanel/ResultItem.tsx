@@ -19,7 +19,10 @@ const ResultItem: React.FC<ResultItemProps> = ({
   onDelete,
 }) => {
   return (
-    <li className="border rounded-lg p-4 space-y-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow transition-shadow">
+    <li className="relative border rounded-lg p-4 space-y-2 bg-white dark:bg-gray-800 shadow-sm hover:shadow transition-shadow">
+      {task.synced && (
+        <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+      )}
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <div className="text-xs text-gray-500">

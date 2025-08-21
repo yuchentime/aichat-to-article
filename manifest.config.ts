@@ -33,6 +33,6 @@ export default defineManifest({
       js: ['src/content/index.tsx']
     }
   ],
-  permissions: ['sidePanel', 'storage'],
+  permissions: ['sidePanel', 'storage', 'contextMenus'],
   host_permissions: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*']
 } as any);
