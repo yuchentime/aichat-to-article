@@ -242,10 +242,6 @@ function SidePanelApp() {
          <ResultItem
            key={task.id}
            task={task}
-           isExpanded={expandedTasks.has(task.id)}
-           isCopied={copiedTaskId === task.id}
-           onToggle={toggleTaskExpansion}
-           onCopy={copyResult}
            onDelete={deleteTask}
            onViewResult={handleViewResult}
          />

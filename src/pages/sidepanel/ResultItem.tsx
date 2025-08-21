@@ -2,20 +2,12 @@ import React from 'react';
 
 type ResultItemProps = {
   task: Task;
-  isExpanded: boolean;
-  isCopied: boolean;
-  onToggle: (taskId: string) => void;
-  onCopy: (task: Task) => void;
   onDelete: (taskId: string) => void;
   onViewResult: (task: Task) => void;
 };
 
 const ResultItem: React.FC<ResultItemProps> = ({
   task,
-  isExpanded,
-  isCopied,
-  onToggle,
-  onCopy,
   onDelete,
   onViewResult,
 }) => {
@@ -34,14 +26,6 @@ const ResultItem: React.FC<ResultItemProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-2 ml-2">
-          {!!task.result && (
-            <button
-              className="text-blue-600 hover:underline text-sm"
-              onClick={() => onCopy(task)}
-            >
-              {isCopied ? '已复制' : '复制'}
-            </button>
-          )}
           <button
             className="text-red-600 hover:underline text-sm"
             onClick={() => onDelete(task.id)}
@@ -53,14 +37,18 @@ const ResultItem: React.FC<ResultItemProps> = ({
 
       <div className="mt-2">
         <div className="text-sm text-gray-700 dark:text-gray-300 p-3 bg-gray-50 dark:bg-gray-700 rounded">
-          {task.summary}
+          <div className="mb-2">
+            {`${task.summary}......`}
+          </div>
+          <div className="flex justify-end">
+            <button
+              className="text-blue-600 hover:underline text-xs"
+              onClick={handleViewResult}
+            >
+              查看
+            </button>
+          </div>
         </div>
-        <button
-          className="text-blue-600 hover:underline text-xs mt-1"
-          onClick={handleViewResult}
-        >
-          查看
-        </button>
       </div>
     </li>
   );

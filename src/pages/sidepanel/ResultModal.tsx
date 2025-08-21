@@ -16,6 +16,15 @@ const ResultModal: React.FC<ResultModalProps> = ({
 }) => {
   const [content, setContent] = React.useState<string>('');
 
+  const handleCopy = async () => {
+      navigator.clipboard.writeText(content || '').then(() => {
+          alert('已复制到剪贴板');
+      }).catch((error) => {
+          console.error('复制失败:', error);
+          alert('复制失败: ' + (error.message || '未知错误'));
+      });
+  }
+
     React.useEffect(() => {
         if (isOpen) {
             chrome.runtime.sendMessage({
@@ -63,10 +72,10 @@ const ResultModal: React.FC<ResultModalProps> = ({
         {/* Footer */}
         <div className="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700">
           <button
-            onClick={onClose}
+            onClick={handleCopy}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
           >
-            关闭
+            复制
           </button>
         </div>
       </div>
