@@ -140,14 +140,15 @@ chrome.runtime.onMessage.addListener((
       return true;
     }
     logger.background.info(`收到任务请求：${taskId}, 域名：${domain}, 消息数量：${messages.length}`);
-    if (taskQueue.some(t => t.id === taskId)) {
+    if (taskQueue.some(t => t.taskId === taskId)) {
       logger.background.warn(`任务已存在，跳过添加：${taskId}`);
       sendResponse({ ok: false, error: 'Task already exists' });
       return true;
     }
     
     const task: QueueTask = {
-      id: taskId || `task-${Date.now()}`,
+      id: `task-${Date.now()}`,
+      taskId,
       action,
       domain,
       status: 'pending',
