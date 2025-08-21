@@ -6,6 +6,14 @@ import { logger } from '../../lib/logger';
 import SettingsModal from './SettingsModal';
 import ResultItem from './ResultItem';
 
+interface ApiConfig {
+  provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
+  model: string;
+  apiKey?: string;
+  baseUrl?: string;
+  current_using?: boolean;
+}
+
 function SidePanelApp() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
@@ -13,6 +21,8 @@ function SidePanelApp() {
   const [runningCount, setRunningCount] = useState<number>(0);
   const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [apiConfigs, setApiConfigs] = useState<ApiConfig[]>([]);
+  const [currentProvider, setCurrentProvider] = useState<string>('');
 
   const toggleTaskExpansion = (taskId: string) => {
     setExpandedTasks(prev => {
@@ -51,23 +61,36 @@ function SidePanelApp() {
     }
   };
 
+  const handleProviderChange = async (provider: string) => {
+    const updated = apiConfigs.map(c => ({ ...c, current_using: c.provider === provider }));
+    setApiConfigs(updated);
+    setCurrentProvider(provider);
+    await chrome.storage.local.set({ apiConfig: updated });
+  };
+
   useEffect(() => {
     const load = async () => {
       logger.sidepanel.info('开始加载任务列表');
-      
+
       let stored = { finished: [], pending: [], running: [] };
-      
+      let configs: ApiConfig[] = [];
+
       // Handle Chrome API availability
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          const result = await chrome.storage.local.get('tasks');
+          const result = await chrome.storage.local.get(['tasks', 'apiConfig']);
           stored = result.tasks || stored;
+          if (Array.isArray(result.apiConfig)) configs = result.apiConfig;
+          else if (result.apiConfig) configs = [result.apiConfig];
         }
       } catch (error) {
         logger.sidepanel.info('Chrome storage not available, using sample data');
       }
-      
+
       logger.sidepanel.info('从 chrome.storage.local 获取到的任务列表', stored);
+      setApiConfigs(configs);
+      const current = configs.find(c => c.current_using) || configs[0];
+      setCurrentProvider(current ? current.provider : '');
       
       // 只显示已完成的任务
       const finishedTasks = stored.finished || [];
@@ -187,20 +210,28 @@ sequenceDiagram
       area: string,
     ) => {
       logger.sidepanel.info('存储变化事件', { area, changes });
-      if (area === 'local' && changes.tasks) {
-        const newValue = changes.tasks.newValue || { finished: [], pending: [], running: [] };
-        const finishedTasks = newValue.finished || [];
-        const pendingTasks = newValue.pending || [];
-        const runningTasks = newValue.running || [];
-        
-        logger.sidepanel.info('任务列表已更新', {
-          finished: finishedTasks.length,
-          pending: pendingTasks.length,
-          running: runningTasks.length
-        });
-        setTasks(finishedTasks);
-        setPendingCount(pendingTasks.length);
-        setRunningCount(runningTasks.length);
+      if (area === 'local') {
+        if (changes.tasks) {
+          const newValue = changes.tasks.newValue || { finished: [], pending: [], running: [] };
+          const finishedTasks = newValue.finished || [];
+          const pendingTasks = newValue.pending || [];
+          const runningTasks = newValue.running || [];
+
+          logger.sidepanel.info('任务列表已更新', {
+            finished: finishedTasks.length,
+            pending: pendingTasks.length,
+            running: runningTasks.length
+          });
+          setTasks(finishedTasks);
+          setPendingCount(pendingTasks.length);
+          setRunningCount(runningTasks.length);
+        }
+        if (changes.apiConfig) {
+          const list = changes.apiConfig.newValue || [];
+          setApiConfigs(list);
+          const current = list.find((c: ApiConfig) => c.current_using) || list[0];
+          setCurrentProvider(current ? current.provider : '');
+        }
       }
     };
     
@@ -255,6 +286,23 @@ sequenceDiagram
           设置
         </button>
       </div>
+
+      {apiConfigs.length > 0 && (
+        <div className="space-y-2 text-sm">
+          <label className="block">API Provider</label>
+          <select
+            className="w-full border p-1 dark:bg-gray-700"
+            value={currentProvider}
+            onChange={(e) => handleProviderChange(e.target.value)}
+          >
+            {apiConfigs.map((c) => (
+              <option key={c.provider} value={c.provider}>
+                {c.provider}{c.model ? ` (${c.model})` : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       {/* 任务状态统计 */}
       <div className="flex gap-4 text-sm">

@@ -14,4 +14,5 @@ interface Task {
   domain: string;
   status: string;
   result: string;
+  model?: string;
 }
