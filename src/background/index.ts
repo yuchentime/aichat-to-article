@@ -28,9 +28,55 @@ const taskState: Record<'pending' | 'running' | 'finished', QueueTask[]> = {
 
 let processing = false;
 
+// Track whether we've hydrated from storage at least once in this SW lifetime
+let hydrated = false;
+
+// Merge storage state with in-memory state, preferring in-memory on conflicts.
+const hydrateState = async () => {
+  try {
+    const stored = await chrome.storage.local.get('tasks');
+    const persisted: Record<'pending' | 'running' | 'finished', QueueTask[]> = stored?.tasks || { pending: [], running: [], finished: [] };
+
+    // Build a unified map by id; prefer current (in-memory) snapshot when duplicated
+    const allPersisted = [...(persisted.pending || []), ...(persisted.running || []), ...(persisted.finished || [])];
+    const allCurrent = [...taskState.pending, ...taskState.running, ...taskState.finished];
+    const map = new Map<string, QueueTask>();
+    for (const t of allPersisted) map.set(t.id, t);
+    for (const t of allCurrent) map.set(t.id, t); // in-memory wins
+
+    const next: Record<'pending' | 'running' | 'finished', QueueTask[]> = { pending: [], running: [], finished: [] };
+    for (const t of map.values()) {
+      // Trust each task's status to place it in the correct bucket
+      if (t.status === 'pending') next.pending.push(t);
+      else if (t.status === 'running') next.running.push(t);
+      else next.finished.push(t);
+    }
+
+    taskState.pending = next.pending;
+    taskState.running = next.running;
+    taskState.finished = next.finished;
+    hydrated = true;
+    logger.background.info('已从存储中hydrate任务状态', {
+      pending: taskState.pending.length,
+      running: taskState.running.length,
+      finished: taskState.finished.length,
+    });
+  } catch (e) {
+    logger.background.error('hydrate任务状态失败', { error: String(e) });
+  }
+};
+
 // todo 后面改用 IndexedDB
 const saveState = async () => {
-  logger.background.info('保存任务状态', { taskState });
+  if (!hydrated) {
+    await hydrateState();
+  }
+  // After ensuring we are merged with persisted state, write back
+  logger.background.info('保存任务状态', {
+    pending: taskState.pending.length,
+    running: taskState.running.length,
+    finished: taskState.finished.length,
+  });
   await chrome.storage.local.set({ tasks: taskState });
   logger.background.info('任务状态已保存到存储');
 };
@@ -65,47 +111,40 @@ const getResult = async (id: string): Promise<string | null> => {
 };
 
 const sendNotification = (title: string, message: string) => {
-    // 检查浏览器通知权限
-    chrome.notifications.getPermissionLevel((level) => {
-      logger.background.info('通知权限级别', { level });
-      
-      if (level === 'denied') {
-        logger.background.warn('浏览器通知权限被拒绝');
+  // 检查浏览器通知权限
+  chrome.notifications.getPermissionLevel((level) => {
+    logger.background.info('通知权限级别', { level });
+
+    if (level === 'denied') {
+      logger.background.warn('浏览器通知权限被拒绝');
+      return;
+    }
+
+    // 使用与 manifest 中一致的打包内资源路径
+    const iconUrl = chrome.runtime.getURL('src/assets/img/icon-128.png');
+    const options: chrome.notifications.NotificationOptions = {
+      type: 'basic',
+      title,
+      message,
+      priority: 2,
+      iconUrl, // 对于 basic 类型，iconUrl 是必填
+    } as any;
+
+    logger.background.info('创建通知', { title, message, iconUrl });
+
+    chrome.notifications.create(options, (notificationId) => {
+      const lastError = chrome.runtime.lastError?.message;
+      if (lastError) {
+        logger.background.error('通知发送失败', { error: lastError, title, message, iconUrl });
         return;
       }
-      
-      // 尝试使用不同的图标路径
-      const iconUrl = chrome.runtime.getURL("icon-128.png");
-      logger.background.info('创建通知', { title, message, iconUrl });
-      
-      // 也尝试不使用图标的情况
-      const notificationOptions: chrome.notifications.NotificationOptions = {
-        type: "basic",
-        title,
-        message,
-        priority: 2
-      };
-      
-      // 只有在能找到图标时才添加图标
-      if (iconUrl && iconUrl !== chrome.runtime.getURL("")) {
-        notificationOptions.iconUrl = iconUrl;
+      if (notificationId) {
+        logger.background.info('通知发送成功', { notificationId, title, message });
+      } else {
+        logger.background.error('通知发送失败（未知原因）', { title, message });
       }
-      
-      chrome.notifications.create(notificationOptions, (notificationId) => {
-        if (notificationId) {
-          logger.background.info('通知发送成功', {
-            notificationId,
-            title,
-            message
-          });
-        } else {
-          logger.background.error('通知发送失败', {
-            title,
-            message
-          });
-        }
-      });
     });
+  });
 }
 
 const runGenerateArticleTask = async (task: QueueTask) => {
@@ -258,6 +297,8 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 chrome.runtime.onInstalled.addListener(() => {
+  // Try hydrating early on install/update
+  void hydrateState();
   const documentUrlPatterns = allowedHosts.map(host => `*://${host}/*`);
   chrome.contextMenus.create({
     id: 'save_to_notion',
@@ -279,6 +320,11 @@ chrome.runtime.onInstalled.addListener(() => {
   //   contexts: ['all'],
   //   documentUrlPatterns,
   // });
+});
+
+// Hydrate on browser startup to reduce first-write races
+chrome.runtime.onStartup?.addListener(() => {
+  void hydrateState();
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
