@@ -18,7 +18,8 @@ if (allowedHosts.includes(location.hostname)) {
         payload: {
           domain: location.hostname,
           messages,
-          taskId
+          taskId,
+          url: window.location.href,
         },
       }).then((result) => {
         logger.content.info('Message sent to background script', result);

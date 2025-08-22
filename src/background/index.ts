@@ -13,6 +13,7 @@ interface QueueTask {
   error?: string;
   messages: string[];
   synced: boolean;
+  url?: string;
 }
 
 const taskQueue: QueueTask[] = [];
@@ -237,7 +238,7 @@ chrome.runtime.onMessage.addListener((
   }
   const action = (message as any)?.action
   if (action === 'generateArticle') {
-    const { domain, messages, taskId } = (message as any).payload || {};
+    const { domain, messages, taskId, url } = (message as any).payload || {};
     if (!domain || !messages || !Array.isArray(messages) || !taskId) {
       respond({ ok: false, error: 'Invalid payload' });
       return false;
@@ -249,7 +250,7 @@ chrome.runtime.onMessage.addListener((
       return false;
     }
 
-    submitTask(domain, messages, taskId, 'generateArticle', respond);
+    submitTask(domain, url, messages, taskId, 'generateArticle', respond);
 
     // Return true to indicate we'll respond asynchronously
     return true;
@@ -273,7 +274,7 @@ chrome.runtime.onMessage.addListener((
   return false;
 });
 
-const submitTask = async (domain: string, messages: string[], taskId: string
+const submitTask = async (domain: string, url: string, messages: string[], taskId: string
   , action: 'generateArticle' | 'directSave', respond: any) => {
     chrome.storage.local.get('apiConfig')
       .then(({ apiConfig }) => {
@@ -296,6 +297,7 @@ const submitTask = async (domain: string, messages: string[], taskId: string
           status: 'pending',
           messages,
           synced: false,
+          url
         };
         taskQueue.push(task);
         taskState.pending.push(task);

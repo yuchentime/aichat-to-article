@@ -17,38 +17,13 @@ interface ApiConfig {
 
 function SidePanelApp() {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [runningCount, setRunningCount] = useState<number>(0);
-  const [copiedTaskId, setCopiedTaskId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [apiConfigs, setApiConfigs] = useState<ApiConfig[]>([]);
   const [currentProvider, setCurrentProvider] = useState<string>('');
   const [showResultModal, setShowResultModal] = useState<boolean>(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-
-  const toggleTaskExpansion = (taskId: string) => {
-    setExpandedTasks(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(taskId)) {
-        newSet.delete(taskId);
-      } else {
-        newSet.add(taskId);
-      }
-      return newSet;
-    });
-  };
-
-  const copyResult = async (task: Task) => {
-    try {
-      await navigator.clipboard.writeText(task.result || '');
-      setCopiedTaskId(task.id);
-      setTimeout(() => setCopiedTaskId(null), 2000);
-      logger.sidepanel.info('复制任务结果', { id: task.id });
-    } catch (err) {
-      logger.sidepanel.error('复制失败', err);
-    }
-  };
 
   const deleteTask = async (id: string) => {
     try {

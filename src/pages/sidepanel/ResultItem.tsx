@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { StatusBadge } from '../../components/ui/StatusBadge';
 import { SyncIndicator } from '../../components/ui/SyncIndicator';
 
 type ResultItemProps = {
@@ -29,19 +28,6 @@ const ResultItem: React.FC<ResultItemProps> = ({
     }
   };
 
-  const formatRelativeTime = (timestamp: string) => {
-    // 实现相对时间格式化逻辑
-    const now = new Date();
-    const taskTime = new Date(timestamp);
-    const diffMs = now.getTime() - taskTime.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    
-    if (diffHours < 1) return '刚刚';
-    if (diffHours < 24) return `${diffHours}小时前`;
-    const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}天前`;
-  };
-
   return (
     <article
       className={`
@@ -61,9 +47,6 @@ const ResultItem: React.FC<ResultItemProps> = ({
     >
       {/* 头部状态栏 */}
       <header className="flex items-center justify-end mb-3">
-        {/* <div className="flex items-center gap-2">
-
-        </div> */}
         
         <div className="flex items-center gap-2">
           <SyncIndicator synced={task.synced} />
@@ -135,12 +118,25 @@ const ResultItem: React.FC<ResultItemProps> = ({
           查看详情
         </button>
         
-        <time
-          className="text-xs text-gray-500 dark:text-gray-400"
-          dateTime={task.id} // 假设id包含时间戳
+        <a
+          href={task.url}
+          target='_blank'
+          className={`
+            px-1 py-1.5 text-sm font-medium rounded-md
+            bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300
+            hover:bg-gray-100 dark:hover:bg-gray-700
+            border border-gray-200 dark:border-gray-600
+            transition-colors duration-200
+            focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1
+            inline-flex items-center gap-1.5
+          `}
+          aria-label={`跳转到 ${task.domain} 原始页面`}
         >
-          {formatRelativeTime(task.id)}
-        </time>
+          跳转
+          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+        </a>
       </footer>
 
       {/* 点击遮罩层关闭菜单 */}

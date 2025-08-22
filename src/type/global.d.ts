@@ -17,4 +17,5 @@ interface Task {
   summary?: string;
   model?: string;
   synced: boolean;
+  url?: string;
 }
