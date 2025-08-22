@@ -33,6 +33,10 @@ const getConfig = async (): Promise<ApiConfig> => {
 const request = async (messages: any[]): Promise<string> => {
     const config = await getConfig();
 
+    if (!config.apiKey) {
+        throw new Error('未配置API Token');
+    }
+
     let apiUrl = '';
     let body = '';
     let headers: Record<string, string> = {};
@@ -66,16 +70,26 @@ const request = async (messages: any[]): Promise<string> => {
             break;
     }
 
-    const data = await commonRequest(apiUrl, body, headers);
-    if (!data) return '';
+    try {
+        const data = await commonRequest(apiUrl, body, headers);
 
-    switch (config.provider) {
-        case 'gemini':
-            return (
-                data.candidates?.[0]?.content?.parts?.[0]?.text || ''
-            );
-        default:
-            return data.choices?.[0]?.message?.content || '';
+        switch (config.provider) {
+            case 'gemini':
+                return (
+                    data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+                );
+            default:
+                return data.choices?.[0]?.message?.content || '';
+        }
+    } catch (error: any) {
+        if (error.status === 401) {
+            throw new Error('Token不存在或无效');
+        }
+        if (error.status === 403) {
+            throw new Error('Token额度不足');
+        }
+        const msg = error instanceof Error ? error.message : String(error);
+        throw new Error(msg || '调用AI服务失败');
     }
 };
 

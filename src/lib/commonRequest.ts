@@ -15,13 +15,22 @@ const commonRequest = async (
         });
 
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            let errorText = '';
+            try {
+                const errData = await response.json();
+                errorText = errData.error?.message || errData.message || '';
+            } catch (e) {
+                // ignore json parse error
+            }
+            const err: any = new Error(errorText || `HTTP error! status: ${response.status}`);
+            err.status = response.status;
+            throw err;
         }
 
         return await response.json();
     } catch (error) {
         console.error('Error during chat API call:', error);
-        return null;
+        throw error;
     }
 };
 
