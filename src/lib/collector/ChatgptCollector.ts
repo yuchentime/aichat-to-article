@@ -6,7 +6,7 @@ export class ChatGptCollector implements MessageCollector {
         const messages: string[] = [];
         const articleList = document.querySelectorAll("article");
         if (articleList.length === 0) {
-            console.warn("No articles found on the page.");
+            console.warn("No messages found on the page.");
             return messages;
         }
         for (const article of articleList) {

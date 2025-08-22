@@ -3,7 +3,7 @@ import { logger } from '@/lib/logger';
 import { showToast } from '@/lib/toast';
 
 // Domains where the content script should respond
-const allowedHosts = ['chatgpt.com', 'grok.com'];
+const allowedHosts = ['chatgpt.com', 'grok.com', 'gemini.google.com'];
 const collectorFactory = new CollectorFactory();
 
 if (allowedHosts.includes(location.hostname)) {

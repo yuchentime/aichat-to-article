@@ -1,13 +1,12 @@
 import html2md from 'html-to-md';
 
-export class GrokCollector implements MessageCollector {
-
-  getAllMessages(): string[] {
+export class GeminiCollector implements MessageCollector {
+  getAllMessages(): string[] {  
     const messages: string[] = [];
-    const articleList = document.querySelectorAll("#last-reply-container > .items-center");
+    const articleList = document.querySelectorAll("#chat-history > .chat-history > .conversation-container");
     if (articleList.length === 0) {
-      console.warn("No messages found on the page.");
-      return messages;
+        console.warn("No messages found on the page.");
+        return messages;
     }
     let whoSaid = '#### You said:';
     for (const article of articleList) {
@@ -21,4 +20,5 @@ export class GrokCollector implements MessageCollector {
     };
     return messages;
   }
+
 }
