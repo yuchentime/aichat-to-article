@@ -76,65 +76,51 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
     taskState.running = taskState.running.filter(t => t.id !== task.id);
     task.status = 'finished';
-    if (result) {
-      task.summary = result.slice(0, 200); // 简单摘要，实际可用更复杂的逻辑
-      saveResult(task.id, result);
-    }
-    if (error) task.error = error;
-    taskState.finished.push(task);
+    try {
+      if (result) {
+        task.summary = result.slice(0, 200); // 简单摘要，实际可用更复杂的逻辑
+        try {
+          await saveResult(task.id, result);
+        } catch (e) {
+          logger.background.error('保存任务结果失败', { taskId: task.id, error: String(e) });
+        }
+      }
+      if (error) task.error = error;
+      taskState.finished.push(task);
 
-    // 发送浏览器通知
-    if (result) {
-      sendNotification('任务完成', '文章已经生成，请打开SidePanel查看。');
-    } else if (error) {
-      sendNotification('任务失败', '任务执行失败。');
-    }
+      // 发送浏览器通知
+      if (result) {
+        sendNotification('任务完成', '文章已经生成，请打开SidePanel查看。');
+      } else if (error) {
+        sendNotification('任务失败', error || '任务执行失败。');
+      }
 
-    logger.background.info('任务状态已更新为已完成', { taskId: task.id });
-    await saveState();
-    
-    logger.background.info('发送队列进度消息', { task });
-    
-    processing = false;
-    logger.background.info('继续处理队列中的下一个任务');
-    processQueue();
+      logger.background.info('任务状态已更新为已完成', { taskId: task.id });
+      try {
+        await saveState();
+      } catch (e) {
+        logger.background.error('保存任务状态失败', { taskId: task.id, error: String(e) });
+      }
+
+      logger.background.info('发送队列进度消息', { task });
+    } finally {
+      processing = false;
+      logger.background.info('继续处理队列中的下一个任务');
+      processQueue();
+    }
   };
 
   try {
     logger.background.info('调用生成函数', { domain: task.domain });
     const userInput = task.messages.join('\n');
-    // let result = await generateArticle(userInput);
-    const result = `
-    HubSpot是一个全面的客户平台，它将营销、销售、客户服务、内容管理、运营和商务工具整合到一个统一的系统中。该平台由Brian Halligan和Dharmesh Shah于2006年创立，最初是一个专注于入站营销的工具，现已发展成为一个强大的AI驱动平台，为全球超过25.8万客户提供服务。
-
-### HubSpot的核心组件
-
-HubSpot平台由多个紧密集成且相互协作的“中心”（Hub）组成，旨在覆盖企业运营的各个方面：
-
-*   **Smart CRM：** 作为HubSpot产品体系的核心，智能CRM提供了一个集中的数据库，用于管理跨部门的客户互动。它包含联系人管理、电子邮件跟踪、销售管道可视化等功能，并能与Gmail和Office 365等工具无缝集成。
-*   **Marketing Hub：** 该模块提供了一系列工具，用于潜在客户开发、电子邮件营销、SEO优化和营销活动自动化。它支持创建着陆页、管理社交媒体以及分析营销绩效。
-*   **Sales Hub：** 旨在提升销售流程效率，包含交易跟踪、销售自动化、邮件序列以及报告仪表板等功能。
-*   **Service Hub：** 此组件专注于客户支持，提供工单系统、知识库创建、实时聊天和客户反馈工具等。
-*   **Content Hub：** 一个AI驱动的内容管理系统，协助企业在博客、播客和社交媒体等各种渠道创建、个性化和分发内容。
-*   **Operations Hub：** 提供数据同步、工作流自动化和数据质量管理工具，确保系统间数据的一致性和清洁度。
-*   **Commerce Hub：** 于2024年推出，该模块使企业能够管理发票、报价、订阅和支付，并与Stripe等支付平台无缝集成。
-
-### AI集成
-
-HubSpot已通过其“Breeze”AI引擎将人工智能深度整合到平台中，该引擎在INBOUND大会上首次亮相。Breeze提供了任务自动化、客户参与度评分和AI驱动的内容生成等功能。
-
-### HubSpot Academy
-
-为支持用户学习，HubSpot提供了HubSpot Academy，这是一个在线培训平台，提供数字营销、销售和客户服务方面的课程和认证。这一资源旨在帮助用户最大限度地发挥平台潜力。
-
-欲了解更多详细信息或探索HubSpot的产品，可访问其官方网站：[hubspot.com](https://www.hubspot.com)。
-    `
+    let result = await generateArticle(userInput);
     logger.background.info('生成结果: ', result);
-    finalize(result);
+    await finalize(result);
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {
-    logger.background.error('任务执行错误', { taskId: task.id, error: e });
-    throw e;
+    const errMsg = e instanceof Error ? e.message : String(e);
+    logger.background.error('任务执行错误', { taskId: task.id, error: errMsg });
+    await finalize(undefined, errMsg);
   }
 
 };
@@ -159,14 +145,33 @@ const processQueue = async () => {
   task.status = 'running';
   taskState.running.push(task);
   logger.background.info('任务状态已更新为运行中', { taskId: task.id });
-  await saveState();
-  
+  try {
+    await saveState();
+  } catch (e) {
+    logger.background.error('保存任务状态失败', { taskId: task.id, error: String(e) });
+  }
+
   logger.background.info('发送队列进度消息', { task });
 
   // 在 MV3 的扩展 Service Worker 中，创建 Web Worker 存在兼容性/权限限制。
   // 为保证稳定性，直接在 Service Worker 主线程执行任务。
   if (task.action === 'generateArticle') {
-    runGenerateArticleTask(task);
+    runGenerateArticleTask(task).catch(async (e) => {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      logger.background.error('任务执行过程中出现未捕获的异常', { taskId: task.id, error: errMsg });
+      sendNotification('任务失败', '任务执行失败。');
+      taskState.running = taskState.running.filter(t => t.id !== task.id);
+      task.status = 'finished';
+      task.error = errMsg;
+      taskState.finished.push(task);
+      try {
+        await saveState();
+      } catch (err) {
+        logger.background.error('保存任务状态失败', { taskId: task.id, error: String(err) });
+      }
+      processing = false;
+      processQueue();
+    });
   } else if (task.action === 'directSave') {
 
   }
@@ -307,6 +312,7 @@ const submitTask = async (domain: string, url: string, messages: string[], taskI
       })
       .catch((err) => {
         logger.background.error('获取配置失败', err);
+        sendNotification('任务失败', '任务执行失败。');
         respond({ ok: false, error: String(err) });
       });
 }
