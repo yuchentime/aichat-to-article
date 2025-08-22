@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { SyncIndicator } from '../../components/ui/SyncIndicator';
 import { showToast } from '@/lib/toast';
 import { useI18n } from '../../lib/i18n';
+import MarkdownRenderer from './MarkdownRenderer';
 
 type ResultItemProps = {
   task: Task;
@@ -115,7 +116,10 @@ const ResultItem: React.FC<ResultItemProps> = ({
         </h3>
         
         <p className="text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-3 text-sm">
-          {task.summary || t('no_summary')}
+          <MarkdownRenderer
+            content={task.summary || t('no_summary')}
+            className="prose prose-sm max-w-none dark:prose-invert"
+          />
         </p>
       </main>
 

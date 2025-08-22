@@ -27,12 +27,13 @@ const taskState: Record<'pending' | 'running' | 'finished', QueueTask[]> = {
 };
 
 let processing = false;
-
+// todo 后面改用 IndexedDB
 const saveState = async () => {
   logger.background.info('保存任务状态', { taskState });
   await chrome.storage.local.set({ tasks: taskState });
   logger.background.info('任务状态已保存到存储');
 };
+
 // 保存：以变量 id 作为键名；用 try/catch 让调用方能 await/捕获错误
 const saveResult = async (id: string, result: string): Promise<void> => {
   logger.background.info('保存任务结果', { id, result });
@@ -63,12 +64,46 @@ const getResult = async (id: string): Promise<string | null> => {
 };
 
 const sendNotification = (title: string, message: string) => {
-    chrome.notifications.create({
-      type: "basic",
-      // iconUrl: "icon.png",
-      title,
-      message,
-      priority: 2
+    // 检查浏览器通知权限
+    chrome.notifications.getPermissionLevel((level) => {
+      logger.background.info('通知权限级别', { level });
+      
+      if (level === 'denied') {
+        logger.background.warn('浏览器通知权限被拒绝');
+        return;
+      }
+      
+      // 尝试使用不同的图标路径
+      const iconUrl = chrome.runtime.getURL("icon-128.png");
+      logger.background.info('创建通知', { title, message, iconUrl });
+      
+      // 也尝试不使用图标的情况
+      const notificationOptions: chrome.notifications.NotificationOptions = {
+        type: "basic",
+        title,
+        message,
+        priority: 2
+      };
+      
+      // 只有在能找到图标时才添加图标
+      if (iconUrl && iconUrl !== chrome.runtime.getURL("")) {
+        notificationOptions.iconUrl = iconUrl;
+      }
+      
+      chrome.notifications.create(notificationOptions, (notificationId) => {
+        if (notificationId) {
+          logger.background.info('通知发送成功', {
+            notificationId,
+            title,
+            message
+          });
+        } else {
+          logger.background.error('通知发送失败', {
+            title,
+            message
+          });
+        }
+      });
     });
 }
 
@@ -81,7 +116,16 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     task.status = 'finished';
     try {
       if (result) {
-        task.summary = result.slice(0, 200); // 简单摘要，实际可用更复杂的逻辑
+        const summary = [];
+        const originalSummary = result.slice(0, 200);
+        const summaryLines = originalSummary.split('\n');
+        for (const line of summaryLines) {
+          if (line.trim().startsWith('##') || line.trim().startsWith('#') || line.trim() === '\n') {
+            continue;
+          }
+          summary.push(line.trim());
+        }
+        task.summary = summary.join('\n'); // 简单摘要，实际可用更复杂的逻辑
         try {
           await saveResult(task.id, result);
         } catch (e) {
@@ -90,6 +134,8 @@ const runGenerateArticleTask = async (task: QueueTask) => {
       }
       if (error) task.error = error;
       taskState.finished.push(task);
+
+      setBadgeText(String(taskState.running.length + taskState.pending.length));
 
       // 发送浏览器通知
       if (result) {
@@ -128,6 +174,16 @@ const runGenerateArticleTask = async (task: QueueTask) => {
 
 };
 
+// 设置badge文本
+const setBadgeText = (text: string) => {
+  chrome.action.setBadgeText({ text });
+  if (text) {
+    chrome.action.setBadgeBackgroundColor({ color: '#f25f20ff' });
+  } else {
+    chrome.action.setBadgeBackgroundColor({ color: '#808080' });
+  }
+}
+
 const processQueue = async () => {
   logger.background.info('处理任务队列', { queueLength: taskQueue.length, processing });
   if (processing) {
@@ -147,6 +203,9 @@ const processQueue = async () => {
   taskState.pending = taskState.pending.filter(t => t.id !== task.id);
   task.status = 'running';
   taskState.running.push(task);
+  
+  setBadgeText(String(taskState.running.length + taskState.pending.length));
+
   logger.background.info('任务状态已更新为运行中', { taskId: task.id });
   try {
     await saveState();
@@ -292,6 +351,25 @@ const submitTask = async (domain: string, url: string, messages: string[], taskI
           respond({ ok: false, error: 'No API configuration available' });
           return;
         }
+        
+        // 测试通知功能
+        const testNotification = () => {
+          logger.background.info('测试通知功能');
+          sendNotification('测试通知', '这是一个测试通知，用于验证通知功能是否正常工作');
+        };
+        
+        // 添加测试命令到消息监听器
+        chrome.runtime.onMessage.addListener((message: any) => {
+          // ... 现有的消息处理代码 ...
+          
+          // 添加测试通知的命令
+          if (message.type === 'testNotification') {
+            testNotification();
+            return true;
+          }
+          
+          return false;
+        });
         let configs: any[] = [];
         if (Array.isArray(apiConfig)) configs = apiConfig;
         else if (apiConfig) configs = [apiConfig];

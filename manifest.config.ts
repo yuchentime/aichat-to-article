@@ -35,6 +35,6 @@ export default defineManifest({
       js: ['src/content/index.tsx']
     }
   ],
-  permissions: ['sidePanel', 'storage', 'contextMenus', 'notifications', 'i18n'],
+  permissions: ['sidePanel', 'storage', 'contextMenus', 'notifications', 'badge'],
   host_permissions: ['https://chatgpt.com/*', 'https://grok.com/*', 'https://gemini.google.com/*', 'http://localhost:5173/*']
 } as any);
