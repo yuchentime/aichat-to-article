@@ -16,7 +16,7 @@ interface ApiConfig {
 }
 
 function SidePanelInner() {
-  const { t, lang, setLanguage } = useI18n();
+  const { t } = useI18n();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [runningCount, setRunningCount] = useState<number>(0);

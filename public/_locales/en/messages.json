@@ -11,7 +11,7 @@
 
   "sidepanel_title": { "message": "Task List" },
   "open_settings": { "message": "Open Settings" },
-  "api_provider": { "message": "API Provider" },
+  "api_provider": { "message": "Select Model" },
 
   "status_pending": { "message": "Pending" },
   "status_running": { "message": "Running" },
@@ -44,6 +44,7 @@
   "language_label": { "message": "Language" },
   "language_auto": { "message": "Browser default" },
   "language_en": { "message": "English" },
-  "language_zh_CN": { "message": "Chinese (Simplified)" }
+  "language_zh_CN": { "message": "Chinese (Simplified)" },
+  "language_zh_TW": { "message": "Chinese (Traditional)" }
 }
 

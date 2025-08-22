@@ -123,6 +123,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     >
                         <option value="en">{t('language_en')}</option>
                         <option value="zh_CN">{t('language_zh_CN')}</option>
+                        <option value="zh_TW">{t('language_zh_TW')}</option>
                     </select>
                 </div>
 

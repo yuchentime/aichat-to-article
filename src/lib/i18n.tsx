@@ -3,14 +3,26 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 type MessagesJson = Record<string, { message: string; description?: string }>;
 type FlatDict = Record<string, string>;
 
-function normalizeLang(input?: string | null): 'en' | 'zh_CN' {
+function normalizeLang(input?: string | null): 'en' | 'zh_CN' | 'zh_TW' {
   if (!input) return 'en';
-  const lower = input.replace('_', '-').toLowerCase();
-  if (lower.startsWith('zh')) return 'zh_CN';
+  const lower = input.replace(/[_]/g, '-').toLowerCase();
+  
+  // Handle Chinese variants
+  if (lower.startsWith('zh-cn') || lower.startsWith('zh-hans') || lower === 'zh-sg' || lower === 'zh-my') {
+    return 'zh_CN';
+  }
+  if (lower.startsWith('zh-tw') || lower.startsWith('zh-hant') || lower === 'zh-hk' || lower === 'zh-mo') {
+    return 'zh_TW';
+  }
+  if (lower.startsWith('zh')) {
+    // Default Chinese to simplified if no specific variant is detected
+    return 'zh_CN';
+  }
+  
   return 'en';
 }
 
-async function loadLocaleDict(lang: 'en' | 'zh_CN'): Promise<FlatDict> {
+async function loadLocaleDict(lang: 'en' | 'zh_CN' | 'zh_TW'): Promise<FlatDict> {
   try {
     const url = typeof chrome !== 'undefined' && chrome.runtime?.getURL
       ? chrome.runtime.getURL(`_locales/${lang}/messages.json`)
@@ -37,17 +49,17 @@ function applySubstitutions(msg: string, substitutions?: string | string[]): str
 }
 
 type I18nContextValue = {
-  lang: 'en' | 'zh_CN';
-  chromeLang: 'en' | 'zh_CN';
+  lang: 'en' | 'zh_CN' | 'zh_TW';
+  chromeLang: 'en' | 'zh_CN' | 'zh_TW';
   t: (key: string, substitutions?: string | string[]) => string;
-  setLanguage: (lang: 'en' | 'zh_CN') => void;
+  setLanguage: (lang: 'en' | 'zh_CN' | 'zh_TW') => void;
 };
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLang] = useState<'en' | 'zh_CN'>('en');
-  const [chromeLang, setChromeLang] = useState<'en' | 'zh_CN'>('en');
+  const [lang, setLang] = useState<'en' | 'zh_CN' | 'zh_TW'>('en');
+  const [chromeLang, setChromeLang] = useState<'en' | 'zh_CN' | 'zh_TW'>('en');
   const [dict, setDict] = useState<FlatDict>({});
 
   useEffect(() => {
@@ -75,7 +87,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
     init();
   }, []);
 
-  const setLanguage = useCallback((l: 'en' | 'zh_CN') => {
+  const setLanguage = useCallback((l: 'en' | 'zh_CN' | 'zh_TW') => {
     setLang(l);
     void chrome.storage?.local.set({ preferredLanguage: l });
     void loadLocaleDict(l).then(setDict).catch(() => setDict({}));
