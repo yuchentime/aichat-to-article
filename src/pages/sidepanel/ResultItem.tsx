@@ -3,6 +3,8 @@ import { SyncIndicator } from '../../components/ui/SyncIndicator';
 import { showToast } from '@/lib/toast';
 import { useI18n } from '../../lib/i18n';
 import MarkdownRenderer from './MarkdownRenderer';
+import chatgptLogo from '@/assets/img/chatgpt.png';
+import grokLogo from '@/assets/img/grok.png';
 
 type ResultItemProps = {
   task: Task;
@@ -107,10 +109,16 @@ const ResultItem: React.FC<ResultItemProps> = ({
           id={`task-title-${task.id}`}
           className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-3"
         >
-          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
-            <svg className="w-4 h-4 text-primary-600 dark:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-            </svg>
+          <div className="w-8 h-8 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+            {task.domain === 'chatgpt.com' ? (
+              <img src={chatgptLogo} alt="ChatGPT" className="w-5 h-5" />
+            ) : task.domain === 'grok.com' ? (
+              <img src={grokLogo} alt="Grok" className="w-5 h-5" />
+            ) : (
+              <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+              </svg>
+            )}
           </div>
           <span className="truncate">{task.domain}</span>
         </h3>
