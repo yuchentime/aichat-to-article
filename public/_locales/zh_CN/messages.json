@@ -1,0 +1,49 @@
+{
+  "ext_name": { "message": "AiChat 发送到 Notion" },
+  "ext_desc": { "message": "发送 AI 对话结果到 Notion，并管理任务" },
+
+  "logo_alt": { "message": "标志" },
+
+  "popup_title": { "message": "Vite React TS" },
+  "popup_subtitle": { "message": "简单的 Chrome 拓展弹窗（支持 HMR）" },
+  "popup_send_message_btn": { "message": "发送消息" },
+  "popup_open_sidepanel_btn": { "message": "打开侧边栏" },
+
+  "sidepanel_title": { "message": "任务列表" },
+  "open_settings": { "message": "打开设置" },
+  "api_provider": { "message": "API 服务商" },
+
+  "status_pending": { "message": "待处理" },
+  "status_running": { "message": "进行中" },
+
+  "more_actions": { "message": "更多操作" },
+  "copy_result": { "message": "复制结果" },
+  "delete_task": { "message": "删除任务" },
+  "no_summary": { "message": "暂无摘要信息" },
+  "view_details": { "message": "查看详情" },
+  "go_to_page": { "message": "跳转" },
+  "aria_view_details": { "message": "查看 $1 的详细结果" },
+  "aria_go_to_original": { "message": "跳转到 $1 原始页面" },
+
+  "model_settings": { "message": "模型设置" },
+  "provider_label": { "message": "服务提供商" },
+  "model_label": { "message": "模型" },
+  "api_key_label": { "message": "API Key" },
+  "base_url_label": { "message": "Base URL" },
+  "base_url_placeholder": { "message": "https://your-api.example.com" },
+  "cancel_btn": { "message": "取消" },
+  "save_btn": { "message": "保存" },
+  "provider_custom": { "message": "自定义" },
+
+  "sync_notion": { "message": "同步 Notion" },
+
+  "copy_success": { "message": "结果已复制到剪贴板" },
+  "copy_failed": { "message": "复制失败，请手动复制" },
+  "send_failed": { "message": "发送消息失败" },
+
+  "language_label": { "message": "语言" },
+  "language_auto": { "message": "跟随浏览器" },
+  "language_en": { "message": "英文" },
+  "language_zh_CN": { "message": "简体中文" }
+}
+

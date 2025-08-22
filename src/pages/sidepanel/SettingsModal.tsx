@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { encrypt, decrypt } from '../../lib/crypto';
+import { useI18n } from '../../lib/i18n';
 
 interface ApiConfig {
     provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -13,7 +14,7 @@ const providers = [
     { value: 'grok', label: 'Grok' },
     { value: 'chatgpt', label: 'ChatGPT' },
     { value: 'gemini', label: 'Gemini' },
-    { value: 'custom', label: '自定义' },
+    { value: 'custom', label: 'custom' },
 ];
 
 const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -24,6 +25,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         baseUrl: '',
         currentUsing: false,
     });
+    const { t, lang, setLanguage } = useI18n();
 
     useEffect(() => {
         (async () => {
@@ -108,9 +110,26 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="bg-white dark:bg-gray-800 p-4 rounded w-80 space-y-4">
-                <h2 className="text-lg font-semibold">模型设置</h2>
+                
+                {/* Language selector */}
+                <h2 className="text-lg font-semibold">
+                    {t('language_label')}
+                </h2>
                 <div className="space-y-2">
-                    <label className="block text-sm">服务提供商</label>
+                    <select
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        value={lang}
+                        onChange={(e) => setLanguage(e.target.value as any)}
+                    >
+                        <option value="en">{t('language_en')}</option>
+                        <option value="zh_CN">{t('language_zh_CN')}</option>
+                    </select>
+                </div>
+
+
+                <h2 className="text-lg font-semibold">{t('model_settings')}</h2>
+                <div className="space-y-2">
+                    <label className="block text-sm">{t('provider_label')}</label>
                     <select
                         className="w-full border p-1 dark:bg-gray-700"
                         value={config.provider}
@@ -120,13 +139,13 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     >
                         {providers.map((p) => (
                             <option key={p.value} value={p.value}>
-                                {p.label}
+                                {p.value === 'custom' ? t('provider_custom') : p.label}
                             </option>
                         ))}
                     </select>
                 </div>
                 <div className="space-y-2">
-                    <label className="block text-sm">模型</label>
+                    <label className="block text-sm">{t('model_label')}</label>
                     <input
                         className="w-full border p-1 dark:bg-gray-700"
                         value={config.model}
@@ -134,7 +153,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     />
                 </div>
                 <div className="space-y-2">
-                    <label className="block text-sm">API Key</label>
+                    <label className="block text-sm">{t('api_key_label')}</label>
                     <input
                         className="w-full border p-1 dark:bg-gray-700"
                         value={config.apiKey}
@@ -143,10 +162,10 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
                 {config.provider === 'custom' && (
                     <div className="space-y-2">
-                        <label className="block text-sm">Base URL</label>
+                        <label className="block text-sm">{t('base_url_label')}</label>
                         <input
                             className="w-full border p-1 dark:bg-gray-700"
-                            placeholder="https://your-api.example.com"
+                            placeholder={t('base_url_placeholder')}
                             value={config.baseUrl}
                             onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
                         />
@@ -154,13 +173,13 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 )}
                 <div className="flex justify-end gap-2 pt-2">
                     <button className="px-3 py-1 text-sm" onClick={onClose}>
-                        取消
+                        {t('cancel_btn')}
                     </button>
                     <button
                         className="px-3 py-1 bg-blue-600 text-white text-sm rounded"
                         onClick={handleSave}
                     >
-                        保存
+                        {t('save_btn')}
                     </button>
                 </div>
             </div>

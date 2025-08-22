@@ -2,7 +2,9 @@ import { defineManifest } from '@crxjs/vite-plugin';
 
 export default defineManifest({
   manifest_version: 3,
-  name: 'AiChat-to-Notion',
+  default_locale: 'en',
+  name: '__MSG_ext_name__',
+  description: '__MSG_ext_desc__',
   version: '0.1.0',
   icons: {
     128: 'src/assets/img/icon-128.png',

@@ -1,0 +1,49 @@
+{
+  "ext_name": { "message": "AiChat to Notion" },
+  "ext_desc": { "message": "Send AI chat results to Notion and manage tasks" },
+
+  "logo_alt": { "message": "Logo" },
+
+  "popup_title": { "message": "Vite React TS" },
+  "popup_subtitle": { "message": "Simple Chrome Extension Popup (HMR enabled)" },
+  "popup_send_message_btn": { "message": "Send Message" },
+  "popup_open_sidepanel_btn": { "message": "Open Side Panel" },
+
+  "sidepanel_title": { "message": "Task List" },
+  "open_settings": { "message": "Open Settings" },
+  "api_provider": { "message": "API Provider" },
+
+  "status_pending": { "message": "Pending" },
+  "status_running": { "message": "Running" },
+
+  "more_actions": { "message": "More actions" },
+  "copy_result": { "message": "Copy Result" },
+  "delete_task": { "message": "Delete Task" },
+  "no_summary": { "message": "No summary available" },
+  "view_details": { "message": "View Details" },
+  "go_to_page": { "message": "Open" },
+  "aria_view_details": { "message": "View details for $1" },
+  "aria_go_to_original": { "message": "Open original page for $1" },
+
+  "model_settings": { "message": "Model Settings" },
+  "provider_label": { "message": "Provider" },
+  "model_label": { "message": "Model" },
+  "api_key_label": { "message": "API Key" },
+  "base_url_label": { "message": "Base URL" },
+  "base_url_placeholder": { "message": "https://your-api.example.com" },
+  "cancel_btn": { "message": "Cancel" },
+  "save_btn": { "message": "Save" },
+  "provider_custom": { "message": "Custom" },
+
+  "sync_notion": { "message": "Sync to Notion" },
+
+  "copy_success": { "message": "Copied to clipboard" },
+  "copy_failed": { "message": "Copy failed, please copy manually" },
+  "send_failed": { "message": "Send message failed" },
+
+  "language_label": { "message": "Language" },
+  "language_auto": { "message": "Browser default" },
+  "language_en": { "message": "English" },
+  "language_zh_CN": { "message": "Chinese (Simplified)" }
+}
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SyncIndicator } from '../../components/ui/SyncIndicator';
 import { showToast } from '@/lib/toast';
+import { useI18n } from '../../lib/i18n';
 
 type ResultItemProps = {
   task: Task;
@@ -13,6 +14,7 @@ const ResultItem: React.FC<ResultItemProps> = ({
   onDelete,
   onViewResult,
 }) => {
+  const { t } = useI18n();
   const [showMenu, setShowMenu] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -27,14 +29,14 @@ const ResultItem: React.FC<ResultItemProps> = ({
       }).then((response: any) => {
         navigator.clipboard.writeText(response.result).then(() => {
           setShowMenu(false)
-          showToast('info', '结果已复制到剪贴板');
+          showToast('info', t('copy_success'));
         }).catch((err) => {
-          showToast('error', '复制失败，请手动复制');
+          showToast('error', t('copy_failed'));
           console.error('复制失败:', err);
         });
       }).catch((error: any) => {
-          console.error('发送消息失败:', error);
-          showToast('error', '复制失败，请手动复制');
+          console.error(t('send_failed') + ':', error);
+          showToast('error', t('copy_failed'));
           console.error('复制失败:', error);
       });
   };
@@ -70,7 +72,7 @@ const ResultItem: React.FC<ResultItemProps> = ({
                 ${showMenu ? 'bg-gray-100 dark:bg-gray-700' : ''}
               `}
               onClick={() => setShowMenu(!showMenu)}
-              aria-label="更多操作"
+              aria-label={t('more_actions')}
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -83,13 +85,13 @@ const ResultItem: React.FC<ResultItemProps> = ({
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
                   onClick={handleCopyResult}
                 >
-                  📋 复制结果
+                  📋 {t('copy_result')}
                 </button>
                 <button
                   className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-red-600 flex items-center gap-2"
                   onClick={() => onDelete(task.id)}
                 >
-                  🗑️ 删除任务
+                  🗑️ {t('delete_task')}
                 </button>
               </div>
             )}
@@ -108,7 +110,7 @@ const ResultItem: React.FC<ResultItemProps> = ({
         </h3>
         
         <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-3">
-          {task.summary || '暂无摘要信息'}
+          {task.summary || t('no_summary')}
         </p>
       </main>
 
@@ -123,9 +125,9 @@ const ResultItem: React.FC<ResultItemProps> = ({
             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
           `}
           onClick={handleViewResult}
-          aria-label={`查看 ${task.domain} 的详细结果`}
+          aria-label={t('aria_view_details', task.domain)}
         >
-          查看详情
+          {t('view_details')}
         </button>
         
         <a
@@ -140,9 +142,9 @@ const ResultItem: React.FC<ResultItemProps> = ({
             focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1
             inline-flex items-center gap-1.5
           `}
-          aria-label={`跳转到 ${task.domain} 原始页面`}
+          aria-label={t('aria_go_to_original', task.domain)}
         >
-          跳转
+          {t('go_to_page')}
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
           </svg>

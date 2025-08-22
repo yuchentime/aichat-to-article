@@ -5,6 +5,7 @@ import { logger } from '../../lib/logger';
 import SettingsModal from './SettingsModal';
 import ResultItem from './ResultItem';
 import ResultModal from './ResultModal';
+import { I18nProvider, useI18n } from '../../lib/i18n';
 
 interface ApiConfig {
   provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -14,7 +15,8 @@ interface ApiConfig {
   currentUsing?: boolean;
 }
 
-function SidePanelApp() {
+function SidePanelInner() {
+  const { t, lang, setLanguage } = useI18n();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [runningCount, setRunningCount] = useState<number>(0);
@@ -176,13 +178,13 @@ function SidePanelApp() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              任务列表
+              {t('sidepanel_title')}
             </h1>
           </div>
           <button
             className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             onClick={() => setShowSettings(true)}
-            aria-label="打开设置"
+            aria-label={t('open_settings')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -196,12 +198,12 @@ function SidePanelApp() {
       <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         {/* API Provider 选择器 */}
         {apiConfigs.length > 0 && (
-          <div className="mb-3">
+          <div className="mb-3 flex justify-between items-center w-full ">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              API Provider
+              {t('api_provider')}
             </label>
             <select
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={currentProvider}
               onChange={(e) => handleProviderChange(e.target.value)}
             >
@@ -219,13 +221,13 @@ function SidePanelApp() {
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-status-pending rounded-full"></div>
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              待处理: <span className="font-medium">{pendingCount}</span>
+              {t('status_pending')}: <span className="font-medium">{pendingCount}</span>
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-status-running rounded-full"></div>
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              进行中: <span className="font-medium">{runningCount}</span>
+              {t('status_running')}: <span className="font-medium">{runningCount}</span>
             </span>
           </div>
         </div>
@@ -272,6 +274,14 @@ function SidePanelApp() {
         />
       )}
     </div>
+  );
+}
+
+function SidePanelApp() {
+  return (
+    <I18nProvider>
+      <SidePanelInner />
+    </I18nProvider>
   );
 }
 

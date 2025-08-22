@@ -33,11 +33,11 @@ if (allowedHosts.includes(location.hostname)) {
         if (result?.ok) {
           showToast('info', 'Task added to queue');
         } else {
-          showToast('error', 'Failed to add task to queue');
+          showToast('error', (result?.error || 'Unknown error'));
         }
       }).catch(error => {
         logger.content.error('Error sending message to background script', error);
-        showToast('error', 'Failed to add task to queue: ' + (error.message || 'Unknown error'));
+        showToast('error', (error.message || 'Unknown error'));
       });
       sendResponse({ ok: true });
       return true; // Keep message channel open for async response

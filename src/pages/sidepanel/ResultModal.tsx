@@ -1,5 +1,6 @@
 import React from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
+import { useI18n } from '../../lib/i18n';
 
 type ResultModalProps = {
   id: string,
@@ -15,6 +16,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
   title,
 }) => {
   const [content, setContent] = React.useState<string>('');
+  const { t } = useI18n();
 
   const syncToNotion = async () => {
 
@@ -70,7 +72,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
             onClick={syncToNotion}
             className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
           >
-            同步Notion
+            {t('sync_notion')}
           </button>
         </div>
       </div>
