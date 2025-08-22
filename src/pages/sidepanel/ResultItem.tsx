@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SyncIndicator } from '../../components/ui/SyncIndicator';
+import { showToast } from '@/lib/toast';
 
 type ResultItemProps = {
   task: Task;
@@ -20,12 +21,22 @@ const ResultItem: React.FC<ResultItemProps> = ({
   };
 
   const handleCopyResult = async () => {
-    try {
-      await navigator.clipboard.writeText(task.result || '');
-      // 可以添加toast提示
-    } catch (err) {
-      console.error('复制失败:', err);
-    }
+     chrome.runtime.sendMessage({
+                type: 'getResultById',
+                id: task.id
+      }).then((response: any) => {
+        navigator.clipboard.writeText(response.result).then(() => {
+          setShowMenu(false)
+          showToast('info', '结果已复制到剪贴板');
+        }).catch((err) => {
+          showToast('error', '复制失败，请手动复制');
+          console.error('复制失败:', err);
+        });
+      }).catch((error: any) => {
+          console.error('发送消息失败:', error);
+          showToast('error', '复制失败，请手动复制');
+          console.error('复制失败:', error);
+      });
   };
 
   return (
@@ -46,11 +57,10 @@ const ResultItem: React.FC<ResultItemProps> = ({
       aria-labelledby={`task-title-${task.id}`}
     >
       {/* 头部状态栏 */}
-      <header className="flex items-center justify-end mb-3">
-        
+      <header className="flex items-center justify-end boreder-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-2">
           <SyncIndicator synced={task.synced} />
-          
+          {/* 分隔线 */}
           {/* 操作菜单 */}
           <div className="relative">
             <button
