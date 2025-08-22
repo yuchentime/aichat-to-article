@@ -142,10 +142,10 @@ function SidePanelInner() {
       const { language } = await chrome.storage.local.get('language');
       if (language) {
           setLanguage(normalizeLang(language));
-          console.log('Setting initial language to:', language);
+          // console.log('Setting initial language to:', language);
       } else {
           const browserLang = chrome.i18n.getUILanguage();
-          console.log('Setting initial language to:', browserLang);
+          // console.log('Setting initial language to:', browserLang);
           setLanguage(normalizeLang(language));
           await chrome.storage.local.set({ language: browserLang });
       }

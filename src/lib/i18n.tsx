@@ -99,7 +99,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         if (typeof chrome !== 'undefined' && chrome.i18n && lang === chromeLang) {
           const msg = chrome.i18n.getMessage(key, substitutions as any);
-          console.log('Using chrome.i18n for key:', key, 'with substitutions:', substitutions);
+          
           if (msg) return msg;
         }
       } catch {

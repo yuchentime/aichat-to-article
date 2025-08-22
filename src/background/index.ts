@@ -27,6 +27,7 @@ const taskState: Record<'pending' | 'running' | 'finished', QueueTask[]> = {
 };
 
 let processing = false;
+
 // todo 后面改用 IndexedDB
 const saveState = async () => {
   logger.background.info('保存任务状态', { taskState });
@@ -343,57 +344,59 @@ chrome.runtime.onMessage.addListener((
 
 const submitTask = async (domain: string, url: string, messages: string[], taskId: string
   , action: 'generateArticle' | 'directSave', respond: any) => {
-    chrome.storage.local.get('apiConfig')
-      .then(({ apiConfig }) => {
-        logger.background.info('获取API配置', { apiConfig });
-        if (!apiConfig || (Array.isArray(apiConfig) && apiConfig.length === 0)) {
-          logger.background.error('没有可用的API配置');
-          respond({ ok: false, error: 'No API configuration available' });
-          return;
+    try {
+      const { apiConfig } = await chrome.storage.local.get('apiConfig');
+      logger.background.info('获取API配置', { apiConfig });
+      
+      if (!apiConfig || (Array.isArray(apiConfig) && apiConfig.length === 0)) {
+        logger.background.error('没有可用的API配置');
+        respond({ ok: false, error: 'No API configuration available' });
+        return;
+      }
+      
+      // 测试通知功能
+      const testNotification = () => {
+        logger.background.info('测试通知功能');
+        sendNotification('测试通知', '这是一个测试通知，用于验证通知功能是否正常工作');
+      };
+      
+      // 添加测试命令到消息监听器
+      chrome.runtime.onMessage.addListener((message: any) => {
+        // ... 现有的消息处理代码 ...
+        
+        // 添加测试通知的命令
+        if (message.type === 'testNotification') {
+          testNotification();
+          return true;
         }
         
-        // 测试通知功能
-        const testNotification = () => {
-          logger.background.info('测试通知功能');
-          sendNotification('测试通知', '这是一个测试通知，用于验证通知功能是否正常工作');
-        };
-        
-        // 添加测试命令到消息监听器
-        chrome.runtime.onMessage.addListener((message: any) => {
-          // ... 现有的消息处理代码 ...
-          
-          // 添加测试通知的命令
-          if (message.type === 'testNotification') {
-            testNotification();
-            return true;
-          }
-          
-          return false;
-        });
-        let configs: any[] = [];
-        if (Array.isArray(apiConfig)) configs = apiConfig;
-        else if (apiConfig) configs = [apiConfig];
-        const current = configs.find((c: any) => c.currentUsing) || configs[0] || {};
-        const task: QueueTask = {
-          id: `task-${Date.now()}`,
-          taskId,
-          action,
-          domain,
-          model: current.model || '',
-          status: 'pending',
-          messages,
-          synced: false,
-          url
-        };
-        taskQueue.push(task);
-        taskState.pending.push(task);
-        saveState();
-        processQueue();
-        respond({ ok: true, id: taskId });
-      })
-      .catch((err) => {
-        logger.background.error('获取配置失败', err);
-        sendNotification('任务失败', '任务执行失败。');
-        respond({ ok: false, error: String(err) });
+        return false;
       });
+      
+      let configs: any[] = [];
+      if (Array.isArray(apiConfig)) configs = apiConfig;
+      else if (apiConfig) configs = [apiConfig];
+      const current = configs.find((c: any) => c.currentUsing) || configs[0] || {};
+      const task: QueueTask = {
+        id: `task-${Date.now()}`,
+        taskId,
+        action,
+        domain,
+        model: current.model || '',
+        status: 'pending',
+        messages,
+        synced: false,
+        url
+      };
+      taskQueue.push(task);
+      taskState.pending.push(task);
+      
+      await saveState();
+      processQueue();
+      respond({ ok: true, id: taskId });
+    } catch (err) {
+      logger.background.error('获取配置失败', err);
+      sendNotification('任务失败', '任务执行失败。');
+      respond({ ok: false, error: String(err) });
+    }
 }
