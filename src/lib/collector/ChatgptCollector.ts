@@ -1,8 +1,6 @@
 import html2md from 'html-to-md';
 
 export class ChatGptCollector implements MessageCollector {
- 
-    userPrefix = "##### You said:";
 
     getAllMessages(): string[] {
         const messages: string[] = [];
@@ -13,11 +11,6 @@ export class ChatGptCollector implements MessageCollector {
         }
         for (const article of articleList) {
             const content = html2md(article.innerHTML);
-            // console.log(content);
-            // const message: Message = {
-            //     role: content.includes(this.userPrefix) ? "user" : "assistant",
-            //     content,
-            // }
             messages.push(content);
         };
         return messages;

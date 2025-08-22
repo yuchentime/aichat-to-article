@@ -29,10 +29,10 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*', 'http://localhost:5173/*'],
+      matches: ['https://chatgpt.com/*', 'https://grok.com/*', 'http://localhost:5173/*'],
       js: ['src/content/index.tsx']
     }
   ],
   permissions: ['sidePanel', 'storage', 'contextMenus', 'notifications'],
-  host_permissions: ['https://chatgpt.com/*', 'https://www.chatgpt.com/*', 'http://localhost:5173/*']
+  host_permissions: ['https://chatgpt.com/*', 'https://grok.com/*', 'http://localhost:5173/*']
 } as any);

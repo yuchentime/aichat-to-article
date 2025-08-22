@@ -156,22 +156,23 @@ const processQueue = async () => {
   // 在 MV3 的扩展 Service Worker 中，创建 Web Worker 存在兼容性/权限限制。
   // 为保证稳定性，直接在 Service Worker 主线程执行任务。
   if (task.action === 'generateArticle') {
-    runGenerateArticleTask(task).catch(async (e) => {
-      const errMsg = e instanceof Error ? e.message : String(e);
-      logger.background.error('任务执行过程中出现未捕获的异常', { taskId: task.id, error: errMsg });
-      sendNotification('任务失败', '任务执行失败。');
-      taskState.running = taskState.running.filter(t => t.id !== task.id);
-      task.status = 'finished';
-      task.error = errMsg;
-      taskState.finished.push(task);
-      try {
-        await saveState();
-      } catch (err) {
-        logger.background.error('保存任务状态失败', { taskId: task.id, error: String(err) });
-      }
-      processing = false;
-      processQueue();
-    });
+    runGenerateArticleTask(task)
+      .catch(async (e) => {
+        const errMsg = e instanceof Error ? e.message : String(e);
+        logger.background.error('任务执行过程中出现未捕获的异常', { taskId: task.id, error: errMsg });
+        sendNotification('任务失败', '任务执行失败。');
+        taskState.running = taskState.running.filter(t => t.id !== task.id);
+        task.status = 'finished';
+        task.error = errMsg;
+        taskState.finished.push(task);
+        try {
+          await saveState();
+        } catch (err) {
+          logger.background.error('保存任务状态失败', { taskId: task.id, error: String(err) });
+        }
+        processing = false;
+        processQueue();
+      });
   } else if (task.action === 'directSave') {
 
   }
@@ -194,7 +195,7 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 // 创建右键菜单，仅在指定域名下显示
-const allowedHosts = ['chatgpt.com', 'www.chatgpt.com'];
+const allowedHosts = ['chatgpt.com', 'www.chatgpt.com', 'grok.com'];
 chrome.runtime.onInstalled.addListener(() => {
   const documentUrlPatterns = allowedHosts.map(host => `*://${host}/*`);
   chrome.contextMenus.create({
@@ -203,29 +204,30 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ['all'],
     documentUrlPatterns,
   });
-  chrome.contextMenus.create({
-    id: 'save_directly',
-    parentId: 'save_to_notion',
-    title: 'Save directly',
-    contexts: ['all'],
-    documentUrlPatterns,
-  });
-  chrome.contextMenus.create({
-    id: 'generate_post',
-    parentId: 'save_to_notion',
-    title: 'Generate Post',
-    contexts: ['all'],
-    documentUrlPatterns,
-  });
+  // chrome.contextMenus.create({
+  //   id: 'save_directly',
+  //   parentId: 'save_to_notion',
+  //   title: 'Save directly',
+  //   contexts: ['all'],
+  //   documentUrlPatterns,
+  // });
+  // chrome.contextMenus.create({
+  //   id: 'generate_post',
+  //   parentId: 'save_to_notion',
+  //   title: 'Generate Post',
+  //   contexts: ['all'],
+  //   documentUrlPatterns,
+  // });
 });
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab || typeof tab.id === 'undefined') return;
-  if (info.menuItemId === 'generate_post') {
+  if (info.menuItemId === 'save_to_notion') {
     chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'generateArticle' });
-  } else if (info.menuItemId === 'save_directly') {
-    chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'directSave' });
-  }
+  } 
+  // else if (info.menuItemId === 'save_directly') {
+  //   chrome.tabs.sendMessage(tab.id, { type: 'saveToNotion', action: 'directSave' });
+  // }
 });
 
 
