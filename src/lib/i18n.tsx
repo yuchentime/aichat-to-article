@@ -3,7 +3,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 type MessagesJson = Record<string, { message: string; description?: string }>;
 type FlatDict = Record<string, string>;
 
-function normalizeLang(input?: string | null): 'en' | 'zh_CN' | 'zh_TW' {
+export function normalizeLang(input?: string | null): 'en' | 'zh_CN' | 'zh_TW' {
   if (!input) return 'en';
   const lower = input.replace(/[_]/g, '-').toLowerCase();
   
@@ -99,6 +99,7 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         if (typeof chrome !== 'undefined' && chrome.i18n && lang === chromeLang) {
           const msg = chrome.i18n.getMessage(key, substitutions as any);
+          console.log('Using chrome.i18n for key:', key, 'with substitutions:', substitutions);
           if (msg) return msg;
         }
       } catch {

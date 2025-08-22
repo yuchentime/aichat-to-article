@@ -4,6 +4,12 @@
 
   "logo_alt": { "message": "标志" },
 
+  "select_language": { "message": "选择语言" },
+  "settings_title": { "message": "设置" },
+
+  "no_task_title": {"message": "暂无已完成任务"},
+  "no_task_subtitle": {"message": "完成的任务将在这里显示。开始使用AI将聊天记录转换为文章并同步到Notion吧！"},
+
   "popup_title": { "message": "Vite React TS" },
   "popup_subtitle": { "message": "简单的 Chrome 拓展弹窗（支持 HMR）" },
   "popup_send_message_btn": { "message": "发送消息" },

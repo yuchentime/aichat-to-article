@@ -4,6 +4,12 @@
 
   "logo_alt": { "message": "Logo" },
 
+  "select_language": { "message": "Select Language" },
+
+  "settings_title": { "message": "Settings" },
+  "no_task_title": {"message": "No completed tasks yet"},
+  "no_task_subtitle": {"message": "Completed tasks will appear here. Start using AI to convert chat history into articles and sync to Notion!"},
+
   "popup_title": { "message": "Vite React TS" },
   "popup_subtitle": { "message": "Simple Chrome Extension Popup (HMR enabled)" },
   "popup_send_message_btn": { "message": "Send Message" },

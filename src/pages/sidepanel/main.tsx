@@ -5,7 +5,7 @@ import { logger } from '../../lib/logger';
 import SettingsModal from './SettingsModal';
 import ResultItem from './ResultItem';
 import ResultModal from './ResultModal';
-import { I18nProvider, useI18n } from '../../lib/i18n';
+import { I18nProvider, useI18n, normalizeLang } from '../../lib/i18n';
 
 interface ApiConfig {
   provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -16,7 +16,7 @@ interface ApiConfig {
 }
 
 function SidePanelInner() {
-  const { t } = useI18n();
+  const { t, setLanguage } = useI18n();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [pendingCount, setPendingCount] = useState<number>(0);
   const [runningCount, setRunningCount] = useState<number>(0);
@@ -135,6 +135,22 @@ function SidePanelInner() {
     load();
     logger.sidepanel.info('添加存储变化监听器');
     chrome.storage.onChanged.addListener(handleStorage);
+
+    
+    (async () => {
+       // Set initial language from storage or default to browser language
+      const { language } = await chrome.storage.local.get('language');
+      if (language) {
+          setLanguage(normalizeLang(language));
+          console.log('Setting initial language to:', language);
+      } else {
+          const browserLang = chrome.i18n.getUILanguage();
+          console.log('Setting initial language to:', browserLang);
+          setLanguage(normalizeLang(language));
+          await chrome.storage.local.set({ language: browserLang });
+      }
+    })()
+
     return () => {
       logger.sidepanel.info('移除存储变化监听器');
       chrome.storage.onChanged.removeListener(handleStorage);
@@ -262,10 +278,10 @@ function SidePanelInner() {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
-              暂无已完成任务
+              {t('no_task_title')}
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
-              完成的任务将在这里显示。开始使用AI将聊天记录转换为文章并同步到Notion吧！
+              {t('no_task_subtitle')}
             </p>
           </div>
         )}
