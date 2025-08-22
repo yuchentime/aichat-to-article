@@ -172,17 +172,23 @@ function SidePanelInner() {
   }, []);
 
   return (
-    <div className="w-full min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* 顶部导航栏 */}
-      <header className="sticky top-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+    <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      {/* 顶部导航栏 - 品牌化设计 */}
+      <header className="sticky top-0 z-20 bg-gradient-to-r from-primary-600 to-primary-500 text-white px-4 py-3 shadow-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {t('sidepanel_title')}
-            </h1>
+            <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-8 8z"/>
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold">AIChat to Notion</h1>
+              <p className="text-xs opacity-90">{t('sidepanel_title')}</p>
+            </div>
           </div>
           <button
-            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 text-white/80 hover:text-white rounded-lg hover:bg-white/10 transition-all duration-200 ripple"
             onClick={() => setShowSettings(true)}
             aria-label={t('open_settings')}
           >
@@ -194,49 +200,51 @@ function SidePanelInner() {
         </div>
       </header>
 
-      {/* 控制面板 */}
-      <section className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-        {/* API Provider 选择器 */}
-        {apiConfigs.length > 0 && (
-          <div className="mb-3 flex justify-between items-center w-full ">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {t('api_provider')}
-            </label>
-            <select
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              value={currentProvider}
-              onChange={(e) => handleProviderChange(e.target.value)}
-            >
-              {apiConfigs.map((c) => (
-                <option key={c.provider} value={c.provider}>
-                  {c.provider}{c.model ? ` (${c.model})` : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+      {/* 控制面板 - 现代化设计 */}
+      <section className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 px-4 py-4">
+        <div className="flex flex-col gap-4">
+          {/* 选择模型 */}
+          {apiConfigs.length > 0 && (
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('api_provider')}
+              </label>
+              <select
+                className="input w-full text-sm"
+                value={currentProvider}
+                onChange={(e) => handleProviderChange(e.target.value)}
+              >
+                {apiConfigs.map((c) => (
+                  <option key={c.provider} value={c.provider}>
+                    {c.provider}{c.model ? ` (${c.model})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-        {/* 任务状态统计 */}
-        <div className="flex gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-status-pending rounded-full"></div>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {t('status_pending')}: <span className="font-medium">{pendingCount}</span>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-status-running rounded-full"></div>
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {t('status_running')}: <span className="font-medium">{runningCount}</span>
-            </span>
+          {/* 任务状态统计 */}
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
+              <div className="w-3 h-3 bg-status-pending rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('status_pending')}: <span className="text-primary-600 dark:text-primary-400">{pendingCount}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
+              <div className="w-3 h-3 bg-status-running rounded-full animate-spin-slow"></div>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {t('status_running')}: <span className="text-primary-600 dark:text-primary-400">{runningCount}</span>
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 任务列表 */}
+      {/* 任务列表 - 网格布局 */}
       <main className="flex-1 p-4">
         {tasks.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tasks.map((task) => (
               <ResultItem
                 key={task.id}
@@ -247,17 +255,17 @@ function SidePanelInner() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <div className="text-center py-16 animate-fade-in">
+            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/20 dark:to-primary-800/20 rounded-2xl flex items-center justify-center">
+              <svg className="w-10 h-10 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
               暂无已完成任务
             </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              完成的任务将在这里显示
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
+              完成的任务将在这里显示。开始使用AI将聊天记录转换为文章并同步到Notion吧！
             </p>
           </div>
         )}

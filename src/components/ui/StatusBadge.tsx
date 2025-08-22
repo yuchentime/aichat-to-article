@@ -35,8 +35,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, children }) =>
   
   return (
     <span className={`
-      inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium
-      ${config.bg} ${config.text}
+      inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium
+      ${config.bg} ${config.text} border border-current border-opacity-20
+      transition-all duration-200 hover:scale-105
     `}>
       <span className="text-xs">{config.icon}</span>
       {children}

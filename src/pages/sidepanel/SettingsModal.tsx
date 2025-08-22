@@ -108,83 +108,124 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white dark:bg-gray-800 p-4 rounded w-80 space-y-4">
-                
-                {/* Language selector */}
-                <h2 className="text-lg font-semibold">
-                    {t('language_label')}
-                </h2>
-                <div className="space-y-2">
-                    <select
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        value={lang}
-                        onChange={(e) => setLanguage(e.target.value as any)}
-                    >
-                        <option value="en">{t('language_en')}</option>
-                        <option value="zh_CN">{t('language_zh_CN')}</option>
-                        <option value="zh_TW">{t('language_zh_TW')}</option>
-                    </select>
-                </div>
-
-
-                <h2 className="text-lg font-semibold">{t('model_settings')}</h2>
-                <div className="space-y-2">
-                    <label className="block text-sm">{t('provider_label')}</label>
-                    <select
-                        className="w-full border p-1 dark:bg-gray-700"
-                        value={config.provider}
-                        onChange={(e) => {
-                            void handleProviderChange(e.target.value as ApiConfig['provider']);
-                        }}
-                    >
-                        {providers.map((p) => (
-                            <option key={p.value} value={p.value}>
-                                {p.value === 'custom' ? t('provider_custom') : p.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="space-y-2">
-                    <label className="block text-sm">{t('model_label')}</label>
-                    <input
-                        className="w-full border p-1 dark:bg-gray-700"
-                        value={config.model}
-                        onChange={(e) => setConfig({ ...config, model: e.target.value })}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <label className="block text-sm">{t('api_key_label')}</label>
-                    <input
-                        className="w-full border p-1 dark:bg-gray-700"
-                        value={config.apiKey}
-                        onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
-                    />
-                </div>
-                {config.provider === 'custom' && (
-                    <div className="space-y-2">
-                        <label className="block text-sm">{t('base_url_label')}</label>
-                        <input
-                            className="w-full border p-1 dark:bg-gray-700"
-                            placeholder={t('base_url_placeholder')}
-                            value={config.baseUrl}
-                            onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
-                        />
-                    </div>
-                )}
-                <div className="flex justify-end gap-2 pt-2">
-                    <button className="px-3 py-1 text-sm" onClick={onClose}>
-                        {t('cancel_btn')}
-                    </button>
-                    <button
-                        className="px-3 py-1 bg-blue-600 text-white text-sm rounded"
-                        onClick={handleSave}
-                    >
-                        {t('save_btn')}
-                    </button>
-                </div>
+      <div className="fixed inset-0 modal-overlay flex items-center justify-center p-4 z-50">
+        <div className="modal-content w-full max-w-md">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-3">
+              <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              设置
+            </h2>
+          </div>
+  
+          <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
+            {/* Language selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                {t('language_label')}
+              </label>
+              <select
+                className="input w-full"
+                value={lang}
+                onChange={(e) => setLanguage(e.target.value as any)}
+              >
+                <option value="en">{t('language_en')}</option>
+                <option value="zh_CN">{t('language_zh_CN')}</option>
+                <option value="zh_TW">{t('language_zh_TW')}</option>
+              </select>
             </div>
+  
+            {/* API Settings */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                {t('model_settings')}
+              </h3>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('provider_label')}
+                  </label>
+                  <select
+                    className="input w-full"
+                    value={config.provider}
+                    onChange={(e) => {
+                      void handleProviderChange(e.target.value as ApiConfig['provider']);
+                    }}
+                  >
+                    {providers.map((p) => (
+                      <option key={p.value} value={p.value}>
+                        {p.value === 'custom' ? t('provider_custom') : p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('model_label')}
+                  </label>
+                  <input
+                    className="input w-full"
+                    placeholder="例如: gpt-4, gemini-pro"
+                    value={config.model}
+                    onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {t('api_key_label')}
+                  </label>
+                  <input
+                    className="input w-full"
+                    type="password"
+                    placeholder="输入您的API密钥"
+                    value={config.apiKey}
+                    onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                  />
+                </div>
+                
+                {config.provider === 'custom' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {t('base_url_label')}
+                    </label>
+                    <input
+                      className="input w-full"
+                      placeholder={t('base_url_placeholder')}
+                      value={config.baseUrl}
+                      onChange={(e) => setConfig({ ...config, baseUrl: e.target.value })}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+  
+          {/* Footer */}
+          <div className="flex justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700">
+            <button
+              className="btn btn-secondary px-6"
+              onClick={onClose}
+            >
+              {t('cancel_btn')}
+            </button>
+            <button
+              className="btn btn-primary px-6"
+              onClick={handleSave}
+            >
+              {t('save_btn')}
+            </button>
+          </div>
         </div>
+      </div>
     );
 };
 
