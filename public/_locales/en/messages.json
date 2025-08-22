@@ -1,5 +1,5 @@
 {
-  "ext_name": { "message": "AiChat to Notion" },
+  "ext_name": { "message": "Save chat history to Notion" },
   "ext_desc": { "message": "Send AI chat results to Notion and manage tasks" },
 
   "logo_alt": { "message": "Logo" },
