@@ -71,6 +71,7 @@ const request = async (messages: any[]): Promise<string> => {
     }
 
     try {
+        console.log('请求API:', apiUrl)
         const data = await commonRequest(apiUrl, body, headers);
 
         switch (config.provider) {
@@ -82,6 +83,7 @@ const request = async (messages: any[]): Promise<string> => {
                 return data.choices?.[0]?.message?.content || '';
         }
     } catch (error: any) {
+        console.error('API请求失败:', error);
         if (error.status === 401) {
             throw new Error('Token不存在或无效');
         }

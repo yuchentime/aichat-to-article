@@ -1,12 +1,15 @@
 import React from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useI18n } from '../../lib/i18n';
+import chatgptLogo from '@/assets/img/chatgpt.png';
+import grokLogo from '@/assets/img/grok.png';
 
 type ResultModalProps = {
   id: string,
   isOpen: boolean;
   onClose: () => void;
   title: string;
+  domain: string;
 };
 
 const ResultModal: React.FC<ResultModalProps> = ({
@@ -14,6 +17,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
   isOpen,
   onClose,
   title,
+  domain,
 }) => {
   const [content, setContent] = React.useState<string>('');
   const { t } = useI18n();
@@ -48,10 +52,16 @@ const ResultModal: React.FC<ResultModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-              </svg>
+            <div className="w-10 h-10 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
+              {domain === 'chatgpt.com' ? (
+                <img src={chatgptLogo} alt="ChatGPT" className="w-5 h-5" />
+              ) : domain === 'grok.com' ? (
+                <img src={grokLogo} alt="Grok" className="w-5 h-5" />
+              ) : (
+                <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                </svg>
+              )}
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
