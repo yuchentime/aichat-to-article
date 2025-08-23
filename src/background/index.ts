@@ -9,12 +9,30 @@ const BACKEND = 'https://www.aichat2notion.com';
 async function ensureAuth() {
   // 先探活：已有 HttpOnly Cookie 就直接返回“已授权”
   const ping = await fetch(`${BACKEND}/api/notion/me`, { credentials: 'include' });
-  console.log('auth info: ', ping)
+  // console.log('auth info: ', ping)
   if (ping.ok) {
-    const info = await ping.json(); // { authed:true, workspace_name, workspace_id }
+     // { authed:true, workspace_name, workspace_id }
+    const info = await ping.json();
     console.log('auth info json: ', info)
     return info;
   }
+
+  // {
+  //     "ok": true,
+  //     "data": {
+  //         "items": [
+  //             {
+  //                 "kind": "database",
+  //                 "id": "2529705c-4e93-804d-a88f-f9956a671441",
+  //                 "title": "Academic Dashboard",
+  //                 "icon": "https://www.notion.so/icons/calendar_blue.svg",
+  //                 "url": "https://www.notion.so/2529705c4e93804da88ff9956a671441"
+  //             }
+  //         ],
+  //         "has_more": false,
+  //         "next_cursor": null
+  //     }
+  // }
 
   // 未授权 → 拉起 OAuth
   const redirectUrl = chrome.identity.getRedirectURL('oauth2');
@@ -37,6 +55,15 @@ async function ensureAuth() {
   const me = await fetch(`${BACKEND}/api/notion/me`, { credentials: 'include' }).then(r => r.json());
   console.log('re auth info: ', me)
   return me; // { authed:true, workspace_name, workspace_id }
+}
+
+async function searchTargets({ type = 'database', query = '' } = {}) {
+  const url = new URL(`${BACKEND}/api/notion/search`);
+  url.searchParams.set('type', type);
+  if (query) url.searchParams.set('query', query);
+  const res = await fetch(url, { credentials: 'include' });
+  if (!res.ok) throw new Error(`Search failed ${res.status}`);
+  return res.json(); // { items, has_more, next_cursor }
 }
 
 export async function saveToNotion({ parentId, meta, blocks }: {parentId: string, meta: any, blocks: string}) {
@@ -171,6 +198,14 @@ chrome.runtime.onMessage.addListener((
         respond({ ok: false, error: String(e) });
       }
     })();
+    return true;
+  }
+
+  if (message.type === 'searchNotionTarget') {
+    searchTargets(message.payload).then(
+      data => respond({ ok: true, data}),
+      err => respond({ ok: false, error: String(err) })
+    );
     return true;
   }
 

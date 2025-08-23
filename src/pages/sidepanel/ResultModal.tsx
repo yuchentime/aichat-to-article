@@ -15,6 +15,14 @@ type ResultModalProps = {
   domain: string;
 };
 
+type NotionPageItem = {
+  id: string,
+  icon?: string,
+  kind?: "database",  // "database"
+  title?: string,
+  url?: string
+}
+
 const ResultModal: React.FC<ResultModalProps> = ({
   id,
   isOpen,
@@ -23,15 +31,40 @@ const ResultModal: React.FC<ResultModalProps> = ({
   domain,
 }) => {
   const [content, setContent] = React.useState<string>('');
+  const [pageItems, setPageItems] = React.useState<NotionPageItem[]>([]);
   const { t } = useI18n();
 
   const syncToNotion = async () => {
     try {
-      chrome.runtime.sendMessage({ type: 'ensureNotionAuth' }).then((resp) => {
-          if (!resp?.ok) {
-            console.log('取得授权信息: ', resp)
-          }
-      })
+      const resp = await chrome.runtime.sendMessage({ type: 'ensureNotionAuth' });
+      if (!resp?.authed) {
+        console.log('查询notion列表')
+        const searchRes = await chrome.runtime.sendMessage({ type: 'searchNotionTarget', payload: { type: 'database' } });
+        console.log('searchRes: ', searchRes)
+        if (!searchRes?.ok || searchRes.error) throw new Error(searchRes?.error || 'search failed');
+
+        const items: NotionPageItem[] = searchRes.data?.items || [];
+        setPageItems(items);
+      } else {
+        console.warn('获取notion授权失败')
+      }
+      
+//       {
+//     "ok": true,
+//     "data": {
+//         "items": [
+//             {
+//                 "kind": "database",
+//                 "id": "2529705c-4e93-804d-a88f-f9956a671441",
+//                 "title": "Academic Dashboard",
+//                 "icon": "https://www.notion.so/icons/calendar_blue.svg",
+//                 "url": "https://www.notion.so/2529705c4e93804da88ff9956a671441"
+//             }
+//         ],
+//         "has_more": false,
+//         "next_cursor": null
+//     }
+// }
 
       // Show success notification
       // chrome.runtime.sendMessage({
@@ -52,6 +85,12 @@ const ResultModal: React.FC<ResultModalProps> = ({
       });
     }
   }
+
+  React.useEffect(() => {
+    if (pageItems.length > 0) {
+      
+    }
+  }, [pageItems]);
 
   const convertMarkdownToNotionBlocks = (markdown: string): any[] => {
     const blocks: any[] = [];
@@ -100,7 +139,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
               type: 'getResultById',
               id
           }).then((response: any) => {
-              console.log('获取结果响应:', response);
+              // console.log('获取结果响应:', response);
               if (response?.ok) {
                   setContent(response.result || '');
               } else {
