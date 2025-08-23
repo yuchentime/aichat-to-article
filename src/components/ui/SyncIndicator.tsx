@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../lib/i18n';
 
 interface SyncIndicatorProps {
   synced: boolean;
@@ -6,6 +7,7 @@ interface SyncIndicatorProps {
 }
 
 export const SyncIndicator: React.FC<SyncIndicatorProps> = ({ synced, className = '' }) => {
+  const { t } = useI18n();
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <div className={`
@@ -22,7 +24,7 @@ export const SyncIndicator: React.FC<SyncIndicatorProps> = ({ synced, className 
           : 'text-orange-600 dark:text-orange-400'
         }
       `}>
-        {synced ? '已同步' : '尚未同步'}
+        {synced ? t('synced'): t('not_sync') }
       </span>
     </div>
   );

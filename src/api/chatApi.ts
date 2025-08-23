@@ -1,4 +1,4 @@
-import { ARTICLE_SYSTEM_PROMPT } from '../prompts/article_prompt';
+import { ARTICLE_SYSTEM_PROMPT, ARTICLE_SYSTEM_PROMPT_EN, ARTICLE_SYSTEM_PROMPT_ZH_TW } from '../prompts/article_prompt';
 import commonRequest from '../lib/commonRequest';
 import { decrypt } from '../lib/crypto';
 
@@ -95,12 +95,26 @@ const request = async (messages: any[]): Promise<string> => {
     }
 };
 
-export const generateArticle = async (userInput: string): Promise<string> => {
+export const generateArticle = async (userInput: string, lang: string): Promise<string> => {
     const messages = [
-        { role: 'system', content: ARTICLE_SYSTEM_PROMPT },
+        { role: 'system', content: getSystemPrompt(lang) },
         { role: 'user', content: userInput },
     ];
 
     return request(messages);
 };
+
+const getSystemPrompt = (lang: string): string => {
+    switch (lang) {
+        case 'zh-CN':
+            return ARTICLE_SYSTEM_PROMPT;
+        case 'zh-TW':
+            return ARTICLE_SYSTEM_PROMPT_ZH_TW;
+        case 'zh-HK':
+            return ARTICLE_SYSTEM_PROMPT_ZH_TW;
+        case 'en':
+        default:
+            return ARTICLE_SYSTEM_PROMPT_EN;
+    }
+}
 

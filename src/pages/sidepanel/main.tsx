@@ -31,7 +31,8 @@ function SidePanelInner() {
       logger.sidepanel.info('删除任务', { id });
       const { tasks: stored = { finished: [], pending: [], running: [] } } = await chrome.storage.local.get('tasks');
       const updatedFinished = (stored.finished || []).filter((t: Task) => t.id !== id);
-      const updatedState = { ...stored, finished: updatedFinished };
+      const updatedRunning = (stored.running || []).filter((t: Task) => t.id !== id);
+      const updatedState = { ...stored, finished: updatedFinished, running: updatedRunning };
       await chrome.storage.local.set({ tasks: updatedState });
       setTasks(prev => prev.filter(t => t.id !== id));
       logger.sidepanel.info('任务已从存储中删除', { id });
@@ -90,7 +91,7 @@ function SidePanelInner() {
       if (finishedTasks.length === 0) {
         setTasks([]);
       } else {
-        setTasks(finishedTasks);
+        setTasks([...runningTasks, ...finishedTasks]);
       }
       
       setPendingCount(pendingTasks.length);
@@ -119,7 +120,7 @@ function SidePanelInner() {
             pending: pendingTasks.length,
             running: runningTasks.length
           });
-          setTasks(finishedTasks);
+          setTasks([...runningTasks, ...finishedTasks]);
           setPendingCount(pendingTasks.length);
           setRunningCount(runningTasks.length);
         }

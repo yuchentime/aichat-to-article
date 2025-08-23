@@ -4,23 +4,24 @@ import { logger } from '../lib/logger';
 // 创建右键菜单，仅在指定域名下显示
 const allowedHosts = ['chatgpt.com', 'grok.com'];
 
-interface QueueTask {
-  id: string;
-  taskId: string;
-  action: 'generateArticle' | 'directSave';
-  domain: string;
-  model: string;
-  status: 'pending' | 'running' | 'finished';
-  result?: string;
-  summary?: string;
-  error?: string;
-  messages: string[];
-  synced: boolean;
-  url?: string;
-}
+// interface QueueTask {
+//   id: string;
+//   taskId: string;
+//   action: 'generateArticle' | 'directSave';
+//   domain: string;
+//   model: string;
+//   status: 'pending' | 'running' | 'finished';
+//   result?: string;
+//   title?: string;
+//   summary?: string;
+//   error?: string;
+//   messages: string[];
+//   synced: boolean;
+//   url?: string;
+// }
 
-const taskQueue: QueueTask[] = [];
-const taskState: Record<'pending' | 'running' | 'finished', QueueTask[]> = {
+const taskQueue: Task[] = [];
+const taskState: Record<'pending' | 'running' | 'finished', Task[]> = {
   pending: [],
   running: [],
   finished: []
@@ -35,16 +36,16 @@ let hydrated = false;
 const hydrateState = async () => {
   try {
     const stored = await chrome.storage.local.get('tasks');
-    const persisted: Record<'pending' | 'running' | 'finished', QueueTask[]> = stored?.tasks || { pending: [], running: [], finished: [] };
+    const persisted: Record<'pending' | 'running' | 'finished', Task[]> = stored?.tasks || { pending: [], running: [], finished: [] };
 
     // Build a unified map by id; prefer current (in-memory) snapshot when duplicated
     const allPersisted = [...(persisted.pending || []), ...(persisted.running || []), ...(persisted.finished || [])];
     const allCurrent = [...taskState.pending, ...taskState.running, ...taskState.finished];
-    const map = new Map<string, QueueTask>();
+    const map = new Map<string, Task>();
     for (const t of allPersisted) map.set(t.id, t);
     for (const t of allCurrent) map.set(t.id, t); // in-memory wins
 
-    const next: Record<'pending' | 'running' | 'finished', QueueTask[]> = { pending: [], running: [], finished: [] };
+    const next: Record<'pending' | 'running' | 'finished', Task[]> = { pending: [], running: [], finished: [] };
     for (const t of map.values()) {
       // Trust each task's status to place it in the correct bucket
       if (t.status === 'pending') next.pending.push(t);
@@ -147,7 +148,7 @@ const sendNotification = (title: string, message: string) => {
   });
 }
 
-const runGenerateArticleTask = async (task: QueueTask) => {
+const runGenerateArticleTask = async (task: Task) => {
   logger.background.info('开始执行任务', { taskId: task.id, action: task.action, domain: task.domain });
   
   const finalize = async (result?: string, error?: string) => {
@@ -157,10 +158,15 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     try {
       if (result) {
         const summary = [];
-        const originalSummary = result.slice(0, 200);
+        const originalSummary = result.slice(0, 200).trim();
         const summaryLines = originalSummary.split('\n');
-        for (const line of summaryLines) {
-          if (line.trim().startsWith('##') || line.trim().startsWith('#') || line.trim() === '\n') {
+        for (let i=0; i < summaryLines.length; i++) {
+          const line = summaryLines[i];
+          if(line.trim() === '\n' || line.trim() === '') {
+            continue;
+          }
+          if (line.trim().startsWith('##') || line.trim().startsWith('#')) {
+            if (!task.title) task.title = line.trim().replace(/#/g, ' ').trim();
             continue;
           }
           summary.push(line.trim());
@@ -199,10 +205,11 @@ const runGenerateArticleTask = async (task: QueueTask) => {
     }
   };
 
+  const lang = navigator.language || navigator.languages?.[0] || 'en';
   try {
     logger.background.info('调用生成函数', { domain: task.domain });
     const userInput = task.messages.join('\n');
-    let result = await generateArticle(userInput);
+    let result = await generateArticle(userInput, lang);
     logger.background.info('生成结果: ', result);
     await finalize(result);
     logger.background.info('任务执行成功', { taskId: task.id });
@@ -306,6 +313,7 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ['all'],
     documentUrlPatterns,
   });
+
   // chrome.contextMenus.create({
   //   id: 'save_directly',
   //   parentId: 'save_to_notion',

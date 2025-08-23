@@ -60,7 +60,15 @@ const ResultItem: React.FC<ResultItemProps> = ({
     >
       {/* 头部状态栏 */}
       <header className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-700">
-        <SyncIndicator synced={task.synced} className="text-xs" />
+        {
+          task.status === 'finished' ? (
+            <SyncIndicator synced={task.synced} className="text-xs" />
+          ) : (
+            <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+              {t('status_running') + '...'}
+            </span>
+          )
+        }
         
         {/* 操作菜单 */}
         <div className="relative">
@@ -120,7 +128,7 @@ const ResultItem: React.FC<ResultItemProps> = ({
               </svg>
             )}
           </div>
-          <span className="truncate">{task.domain}</span>
+          <span className="truncate">{task.title ?? task.domain}</span>
         </h3>
         
         <p className="text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-3 text-sm">
@@ -136,6 +144,7 @@ const ResultItem: React.FC<ResultItemProps> = ({
         <button
           className="btn btn-primary flex-1 text-sm py-2"
           onClick={handleViewResult}
+          disabled={task.status !== 'finished'}
           aria-label={t('aria_view_details', task.domain)}
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

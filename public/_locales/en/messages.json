@@ -22,6 +22,9 @@
   "status_pending": { "message": "Pending" },
   "status_running": { "message": "Running" },
 
+  "not_sync": { "message": "Not Synced" },
+  "synced": { "message": "Synced" },
+
   "more_actions": { "message": "More actions" },
   "copy_result": { "message": "Copy Result" },
   "delete_task": { "message": "Delete Task" },

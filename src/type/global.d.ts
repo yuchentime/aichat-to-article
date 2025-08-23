@@ -10,12 +10,16 @@ interface MessageCollector {
 
 interface Task {
   id: string;
-  action: string;
+  taskId: string;
+  action: 'generateArticle' | 'directSave';
   domain: string;
-  status: string;
-  result: string;
+  model: string;
+  status: 'pending' | 'running' | 'finished';
+  result?: string;
+  title?: string;
   summary?: string;
-  model?: string;
+  error?: string;
+  messages: string[];
   synced: boolean;
   url?: string;
 }

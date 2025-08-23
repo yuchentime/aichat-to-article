@@ -22,6 +22,9 @@
   "status_pending": { "message": "待处理" },
   "status_running": { "message": "进行中" },
 
+  "not_sync": { "message": "尚未同步" },
+  "synced": { "message": "已同步" },
+
   "more_actions": { "message": "更多操作" },
   "copy_result": { "message": "复制结果" },
   "delete_task": { "message": "删除任务" },

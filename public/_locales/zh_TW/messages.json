@@ -10,6 +10,9 @@
   "no_task_title": {"message": "暫無已完成任務"},
   "no_task_subtitle": {"message": "完成的任務將在這裡顯示。開始使用AI將聊天記錄轉換為文章並同步到Notion吧！"},
 
+  "not_sync": { "message": "尚未同步" },
+  "synced": { "message": "已同步" },
+
   "popup_title": { "message": "Vite React TS" },
   "popup_subtitle": { "message": "簡單的 Chrome 擴展彈窗（支援 HMR）" },
   "popup_send_message_btn": { "message": "傳送訊息" },
