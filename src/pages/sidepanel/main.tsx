@@ -216,6 +216,7 @@ function SidePanelInner() {
         </Suspense>
       )}
       {showResultModal && selectedTask && (
+        <Suspense fallback={null}>
           <ResultModal
             id={selectedTask.id}
             isOpen={showResultModal}
@@ -223,6 +224,7 @@ function SidePanelInner() {
             title={selectedTask.title ?? selectedTask.domain}
             domain={selectedTask.domain}
           />
+        </Suspense>
       )}
     </div>
   );

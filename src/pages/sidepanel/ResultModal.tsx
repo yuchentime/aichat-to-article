@@ -148,7 +148,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 max-h-[calc(90vh-200px)]">
           <MarkdownRenderer
             content={content}
-            className="prose prose-sm max-w-none dark:prose-invert"
+            className="prose prose-sm max-w-none dark:prose-invert break-words"
           />
         </div>
 
