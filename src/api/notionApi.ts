@@ -45,7 +45,7 @@ export class NotionAPI {
     };
   }
 
-  static createHeadingBlock(content: string, level: 1 | 2 | 3 = 1): BlockObjectRequest {
+  static createHeadingBlock(content: string, level: 1 | 2 | 3 | 4| 5 = 1): BlockObjectRequest {
     return {
       type: `heading_${level}`,
       [`heading_${level}`]: {

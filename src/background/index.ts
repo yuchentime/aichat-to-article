@@ -66,7 +66,7 @@ async function searchTargets({ type = 'database', query = '' } = {}) {
   return res.json(); // { items, has_more, next_cursor }
 }
 
-export async function saveToNotion({ parentId, meta, blocks }: {parentId: string, meta: any, blocks: string}) {
+export async function saveToNotion({ parentId, title, blocks }: {parentId: string, title: string, blocks: string}) {
   // 确保已经授权（Cookie 已写入）
   // 你可以在失败时自动触发 ensureAuth()
   const res = await fetch(`${BACKEND}/api/notion/create-article`, {
@@ -75,9 +75,7 @@ export async function saveToNotion({ parentId, meta, blocks }: {parentId: string
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       parentId,
-      title: meta.title,
-      url: meta.url,
-      description: meta.description,
+      title,
       blocks
     })
   });

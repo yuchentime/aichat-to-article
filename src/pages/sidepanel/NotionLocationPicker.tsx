@@ -34,7 +34,7 @@ const NotionLocationPicker: React.FC<NotionLocationPickerProps> = ({
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-          选择 Notion 数据库
+          保存至 Notion 数据库
         </h3>
         
         <div className="space-y-3 mb-4">

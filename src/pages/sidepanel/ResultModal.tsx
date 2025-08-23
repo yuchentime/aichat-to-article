@@ -4,6 +4,7 @@ import { useI18n } from '../../lib/i18n';
 import { NotionAPI } from '../../api/notionApi';
 import chatgptLogo from '@/assets/img/chatgpt.png';
 import grokLogo from '@/assets/img/grok.png';
+import { showToast } from '@/lib/toast/index'
 
 const NotionLocationPickerWithLazy = lazy(() => import('./NotionLocationPicker'));
 const LoadingWithLazy = lazy(() => import('./Loading'));
@@ -61,14 +62,6 @@ const ResultModal: React.FC<ResultModalProps> = ({
           message: '获取notion授权失败'
         });
       }
-      
-      // Show success notification
-      // chrome.runtime.sendMessage({
-      //   type: 'showNotification',
-      //   title: '同步成功',
-      //   message: '内容已成功保存到 Notion',
-      //   // url: result.url
-      // });
 
     } catch (error) {
       console.error('Failed to sync to Notion:', error);
@@ -84,11 +77,23 @@ const ResultModal: React.FC<ResultModalProps> = ({
 
   const handleConfirmSelection = (selectedItemId: string | null) => {
     console.log('Selected item:', selectedItemId);
-    setShowFloatingWindow(false);
+    const {title, blocks} = convertMarkdownToNotionBlocks(content);
+    chrome.runtime.sendMessage({type: 'saveToNotion', payload: {
+      parentId: selectedItemId,
+      blocks,
+      title
+    }}).then(() => {
+      setShowFloatingWindow(false);
+      showToast('info', "同步成功")
+    }).catch(e => {
+      console.error('Failed to save chat to Notion:', e)
+      showToast('info', "同步失败")
+    })
   };
 
-  const convertMarkdownToNotionBlocks = (markdown: string): any[] => {
+  const convertMarkdownToNotionBlocks = (markdown: string) => {
     const blocks: any[] = [];
+    let title: string = '';
     const lines = markdown.split('\n');
     
     for (const line of lines) {
@@ -96,11 +101,23 @@ const ResultModal: React.FC<ResultModalProps> = ({
       
       // Handle headings
       if (line.startsWith('# ')) {
-        blocks.push(NotionAPI.createHeadingBlock(line.substring(2).trim(), 1));
+        if (!title) {
+          title = line.substring(2).trim();
+        } else {
+          blocks.push(NotionAPI.createHeadingBlock(line.substring(2).trim(), 1));
+        }
       } else if (line.startsWith('## ')) {
-        blocks.push(NotionAPI.createHeadingBlock(line.substring(3).trim(), 2));
+        if (!title) {
+          title = line.substring(3).trim();
+        } else {
+          blocks.push(NotionAPI.createHeadingBlock(line.substring(3).trim(), 2));
+        }
       } else if (line.startsWith('### ')) {
         blocks.push(NotionAPI.createHeadingBlock(line.substring(4).trim(), 3));
+      } else if (line.startsWith('#### ')) {
+        blocks.push(NotionAPI.createHeadingBlock(line.substring(5).trim(), 4));
+      } else if (line.startsWith('##### ')) {
+        blocks.push(NotionAPI.createHeadingBlock(line.substring(6).trim(), 5));
       } 
       // Handle code blocks (simple detection)
       else if (line.startsWith('```')) {
@@ -124,8 +141,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
         blocks.push(NotionAPI.createMarkdownBlock(line));
       }
     }
-    
-    return blocks;
+    return {title, blocks};
   }
 
   React.useEffect(() => {
