@@ -86,7 +86,7 @@ chrome.runtime.onMessage.addListener((
     (async () => {
       try {
         if (!isHydrated()) await hydrateState();
-        respond({ ok: true, tasks: getTaskState() });
+        respond({ ok: true, tasks: await getTaskState() });
       } catch (e) {
         logger.background.error('获取任务状态失败?', { error: String(e) });
         respond({ ok: false, error: String(e) });

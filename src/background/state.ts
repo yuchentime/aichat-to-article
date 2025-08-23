@@ -13,7 +13,8 @@ let hydrated = false;
 
 export const isHydrated = () => hydrated;
 
-export const getTaskState = () => taskState;
+// 从 indexdb 中取数
+export const getTaskState = () => dbGetTasksState();
 
 // Merge storage state with in-memory state, preferring in-memory on conflicts
 export const hydrateState = async (): Promise<void> => {

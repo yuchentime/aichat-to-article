@@ -15,6 +15,7 @@ const runGenerateArticleTask = async (task: Task) => {
     logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
     taskState.running = taskState.running.filter((t) => t.id !== task.id);
     task.status = 'finished';
+    task.messages = [];
     try {
       if (result) {
         const summary: string[] = [];

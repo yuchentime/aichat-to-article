@@ -14,7 +14,7 @@
   "synced": { "message": "已同步" },
 
   "popup_title": { "message": "Vite React TS" },
-  "popup_subtitle": { "message": "簡單的 Chrome 擴展彈窗（支援 HMR）" },
+  "popup_subtitle": { "message": "簡單的 Chrome 擴展彈窗（支援 HMR)" },
   "popup_send_message_btn": { "message": "傳送訊息" },
   "popup_open_sidepanel_btn": { "message": "開啟側邊欄" },
 

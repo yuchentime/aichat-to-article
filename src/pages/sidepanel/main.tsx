@@ -74,6 +74,7 @@ function SidePanelInner() {
 
           // 从indexdb中读取tasks
           const tasksStateResult = await chrome.runtime.sendMessage({type: 'getTasksState'});
+          console.log('取得任务列表: ', tasksStateResult)
           if (tasksStateResult.tasks) {
             stored = tasksStateResult.tasks
           }
