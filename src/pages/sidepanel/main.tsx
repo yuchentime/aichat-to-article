@@ -28,11 +28,6 @@ function SidePanelInner() {
 
   const deleteTask = async (id: string) => {
     try {
-      logger.sidepanel.info('删除任务', { id });
-      // const { tasks: stored = { finished: [], pending: [], running: [] } } = await chrome.storage.local.get('tasks');
-      // const updatedFinished = (stored.finished || []).filter((t: Task) => t.id !== id);
-      // const updatedRunning = (stored.running || []).filter((t: Task) => t.id !== id);
-      // const updatedState = { ...stored, finished: updatedFinished, running: updatedRunning };
       chrome.runtime.sendMessage({type: 'deleteTaskById', id}).then(() => {
         setTasks(prev => prev.filter(t => t.id !== id));
       });
