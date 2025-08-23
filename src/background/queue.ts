@@ -42,7 +42,7 @@ const runGenerateArticleTask = async (task: Task) => {
       }
       if (error) task.error = error;
 
-      taskState.finished.push(task);
+      taskState.finished.unshift(task);
       setBadgeText(String(taskState.running.length + taskState.pending.length));
 
       if (result) {
@@ -120,7 +120,7 @@ const runGenerateArticleTask = async (task: Task) => {
       taskState.running = taskState.running.filter((t) => t.id !== task.id);
       task.status = 'finished';
       task.error = `${errMsg}`;
-      taskState.finished.push(task);
+      taskState.finished.unshift(task);
       
       try {
         await saveState();
@@ -158,7 +158,7 @@ const processQueue = async () => {
 
   taskState.pending = taskState.pending.filter((t) => t.id !== task.id);
   task.status = 'running';
-  taskState.running.push(task);
+  taskState.running.unshift(task);
 
   setBadgeText(String(taskState.running.length + taskState.pending.length));
 
@@ -222,8 +222,8 @@ export const submitGenerateTask = async (
       url,
     };
 
-    taskQueue.push(task);
-    taskState.pending.push(task);
+    taskQueue.unshift(task);
+    taskState.pending.unshift(task);
     setBadgeText(String(taskState.running.length + taskState.pending.length));
     try {
       await saveState();

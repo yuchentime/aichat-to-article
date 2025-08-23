@@ -308,7 +308,7 @@ function SidePanelInner() {
           id={selectedTask.id}
           isOpen={showResultModal}
           onClose={handleCloseResultModal}
-          title={selectedTask.domain}
+          title={selectedTask.title ?? selectedTask.domain}
           domain={selectedTask.domain}
         />
       )}
