@@ -1,5 +1,6 @@
 import React from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
+import NotionLocationPicker from './NotionLocationPicker';
 import { useI18n } from '../../lib/i18n';
 import { notionConfigStore } from '../../lib/storage';
 import { NotionAPI } from '../../api/notionApi';
@@ -86,11 +87,19 @@ const ResultModal: React.FC<ResultModalProps> = ({
     }
   }
 
+  const [showFloatingWindow, setShowFloatingWindow] = React.useState(false);
+  const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     if (pageItems.length > 0) {
-      
+      setShowFloatingWindow(true);
     }
   }, [pageItems]);
+
+  const handleConfirmSelection = (selectedItemId: string | null) => {
+    console.log('Selected item:', selectedItemId);
+    setShowFloatingWindow(false);
+  };
 
   const convertMarkdownToNotionBlocks = (markdown: string): any[] => {
     const blocks: any[] = [];
@@ -214,6 +223,13 @@ const ResultModal: React.FC<ResultModalProps> = ({
           </button>
         </div>
       </div>
+
+      <NotionLocationPicker
+        isOpen={showFloatingWindow}
+        onClose={() => setShowFloatingWindow(false)}
+        pageItems={pageItems}
+        onConfirm={handleConfirmSelection}
+      />
     </div>
   );
 };
