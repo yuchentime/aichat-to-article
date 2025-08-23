@@ -1,5 +1,5 @@
 {
-  "ext_name": { "message": "儲存聊天記錄到 Notion" },
+  "ext_name": { "message": "AIChat to Notion" },
   "ext_desc": { "message": "傳送 AI 對話結果到 Notion，並管理任務" },
 
   "logo_alt": { "message": "標誌" },

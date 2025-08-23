@@ -53,9 +53,9 @@ const ResultModal: React.FC<ResultModalProps> = ({
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 dark:bg-primary-900/30 rounded-xl flex items-center justify-center">
-              {domain === 'chatgpt.com' ? (
+              {domain.endsWith('chatgpt.com') ? (
                 <img src={chatgptLogo} alt="ChatGPT" className="w-5 h-5" />
-              ) : domain === 'grok.com' ? (
+              ) : domain.endsWith('grok.com') ? (
                 <img src={grokLogo} alt="Grok" className="w-5 h-5" />
               ) : (
                 <svg className="w-5 h-5 text-primary-600 dark:text-primary-400" fill="currentColor" viewBox="0 0 24 24">

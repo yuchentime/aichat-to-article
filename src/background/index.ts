@@ -2,10 +2,35 @@ import { generateArticle } from '../api/chatApi';
 import { logger } from '../lib/logger';
 import { getTasksState as dbGetTasksState, putTasksState as dbPutTasksState, getResultBlob as dbGetResultBlob, putResultBlob as dbPutResultBlob } from '../lib/db';
 import { getTextByLang } from '@/lib/langConst';
-import { get } from 'http';
 
 // 创建右键菜单，仅在指定域名下显示
 const allowedHosts = ['chatgpt.com', 'grok.com'];
+
+// 确保右键菜单已创建（在SW重启或安装后都调用一次）
+const ensureContextMenus = () => {
+  const documentUrlPatterns = allowedHosts.map(host => `*://${host}/*`);
+  try {
+    chrome.contextMenus.removeAll(() => {
+      // 忽略 removeAll 的报错（例如首次运行时没有菜单）
+      void chrome.contextMenus.create({
+        id: 'save_to_notion',
+        title: 'Generate Post',
+        contexts: ['all'],
+        documentUrlPatterns,
+      });
+    });
+  } catch (e) {
+    // 某些环境下 removeAll 可能抛错，这里兜底直接尝试创建
+    try {
+      chrome.contextMenus.create({
+        id: 'save_to_notion',
+        title: 'Generate Post',
+        contexts: ['all'],
+        documentUrlPatterns,
+      });
+    } catch {}
+  }
+}
 
 const taskQueue: Task[] = [];
 const taskState: Record<'pending' | 'running' | 'finished', Task[]> = {
@@ -64,7 +89,6 @@ const saveState = async () => {
     finished: taskState.finished.length,
   });
   await dbPutTasksState(taskState);
-  // await chrome.storage.local.set({ tasks: taskState });
   try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
   logger.background.info('state persisted');
 };
@@ -290,13 +314,7 @@ chrome.action.onClicked.addListener((tab) => {
 chrome.runtime.onInstalled.addListener(() => {
   // Try hydrating early on install/update
   void hydrateState();
-  const documentUrlPatterns = allowedHosts.map(host => `*://${host}/*`);
-  chrome.contextMenus.create({
-    id: 'save_to_notion',
-    title: 'Generate Post',
-    contexts: ['all'],
-    documentUrlPatterns,
-  });
+  ensureContextMenus();
 
   // chrome.contextMenus.create({
   //   id: 'save_directly',
@@ -317,7 +335,11 @@ chrome.runtime.onInstalled.addListener(() => {
 // Hydrate on browser startup to reduce first-write races
 chrome.runtime.onStartup?.addListener(() => {
   void hydrateState();
+  ensureContextMenus();
 });
+
+// 确保在SW冷启动时也注册一次菜单（避免仅依赖 onInstalled / onStartup）
+ensureContextMenus();
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (!tab || typeof tab.id === 'undefined') return;
