@@ -1,12 +1,12 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
-import NotionLocationPicker from './NotionLocationPicker';
 import { useI18n } from '../../lib/i18n';
-import { notionConfigStore } from '../../lib/storage';
 import { NotionAPI } from '../../api/notionApi';
-import { decrypt } from '../../lib/crypto';
 import chatgptLogo from '@/assets/img/chatgpt.png';
 import grokLogo from '@/assets/img/grok.png';
+
+const NotionLocationPickerWithLazy = lazy(() => import('./NotionLocationPicker'));
+const LoadingWithLazy = lazy(() => import('./Loading'));
 
 type ResultModalProps = {
   id: string,
@@ -33,9 +33,12 @@ const ResultModal: React.FC<ResultModalProps> = ({
 }) => {
   const [content, setContent] = React.useState<string>('');
   const [pageItems, setPageItems] = React.useState<NotionPageItem[]>([]);
+  const [showFloatingWindow, setShowFloatingWindow] = React.useState(false);
+  const [loading, setLoaing] = React.useState(false);
   const { t } = useI18n();
 
   const syncToNotion = async () => {
+    setLoaing(true);
     try {
       const resp = await chrome.runtime.sendMessage({ type: 'ensureNotionAuth' });
       if (!resp?.authed) {
@@ -45,28 +48,20 @@ const ResultModal: React.FC<ResultModalProps> = ({
         if (!searchRes?.ok || searchRes.error) throw new Error(searchRes?.error || 'search failed');
 
         const items: NotionPageItem[] = searchRes.data?.items || [];
+        
         setPageItems(items);
+        setLoaing(false);
+        setShowFloatingWindow(true);
       } else {
+        setLoaing(false);
         console.warn('获取notion授权失败')
+        chrome.runtime.sendMessage({
+          type: 'showNotification',
+          title: '同步失败',
+          message: '获取notion授权失败'
+        });
       }
       
-//       {
-//     "ok": true,
-//     "data": {
-//         "items": [
-//             {
-//                 "kind": "database",
-//                 "id": "2529705c-4e93-804d-a88f-f9956a671441",
-//                 "title": "Academic Dashboard",
-//                 "icon": "https://www.notion.so/icons/calendar_blue.svg",
-//                 "url": "https://www.notion.so/2529705c4e93804da88ff9956a671441"
-//             }
-//         ],
-//         "has_more": false,
-//         "next_cursor": null
-//     }
-// }
-
       // Show success notification
       // chrome.runtime.sendMessage({
       //   type: 'showNotification',
@@ -77,7 +72,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
 
     } catch (error) {
       console.error('Failed to sync to Notion:', error);
-      
+      setLoaing(false);
       // Show error notification
       chrome.runtime.sendMessage({
         type: 'showNotification',
@@ -86,15 +81,6 @@ const ResultModal: React.FC<ResultModalProps> = ({
       });
     }
   }
-
-  const [showFloatingWindow, setShowFloatingWindow] = React.useState(false);
-  const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (pageItems.length > 0) {
-      setShowFloatingWindow(true);
-    }
-  }, [pageItems]);
 
   const handleConfirmSelection = (selectedItemId: string | null) => {
     console.log('Selected item:', selectedItemId);
@@ -214,6 +200,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
           </button>
           <button
             onClick={syncToNotion}
+            disabled={loading}
             className="btn btn-primary px-6"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +211,12 @@ const ResultModal: React.FC<ResultModalProps> = ({
         </div>
       </div>
 
-      <NotionLocationPicker
+      {/* Global Loading Overlay */}
+      {loading && (
+        <LoadingWithLazy/>
+      )}
+
+      <NotionLocationPickerWithLazy
         isOpen={showFloatingWindow}
         onClose={() => setShowFloatingWindow(false)}
         pageItems={pageItems}
