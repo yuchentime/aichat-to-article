@@ -1,36 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../styles/tailwind.css';
 import { logger } from '../../lib/logger';
-import SettingsModal from './SettingsModal';
 import ResultItem from './ResultItem';
-import ResultModal from './ResultModal';
 import { I18nProvider, useI18n, normalizeLang } from '../../lib/i18n';
+import { useSidepanelData } from '../../hooks/useSidepanelData';
 
-interface ApiConfig {
-  provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
-  model: string;
-  apiKey?: string;
-  baseUrl?: string;
-  currentUsing?: boolean;
-}
+// 懒加载模态框组件
+const SettingsModal = lazy(() => import('./SettingsModal'));
+const ResultModal = lazy(() => import('./ResultModal'));
 
 function SidePanelInner() {
   const { t, setLanguage } = useI18n();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [pendingCount, setPendingCount] = useState<number>(0);
-  const [runningCount, setRunningCount] = useState<number>(0);
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [apiConfigs, setApiConfigs] = useState<ApiConfig[]>([]);
-  const [currentProvider, setCurrentProvider] = useState<string>('');
   const [showResultModal, setShowResultModal] = useState<boolean>(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  
+  // 使用自定义hook获取数据
+  const { 
+    tasks, 
+    pendingCount, 
+    runningCount, 
+    apiConfigs, 
+    currentProvider, 
+    isLoading,
+    setApiConfigs,
+    setCurrentProvider
+  } = useSidepanelData();
 
   const deleteTask = async (id: string) => {
     try {
-      chrome.runtime.sendMessage({type: 'deleteTaskById', id}).then(() => {
-        setTasks(prev => prev.filter(t => t.id !== id));
-      });
+      chrome.runtime.sendMessage({type: 'deleteTaskById', id});
       
       logger.sidepanel.info('任务已从存储中删除', { id });
     } catch (err) {
@@ -56,145 +56,18 @@ function SidePanelInner() {
   };
 
   useEffect(() => {
-    const load = async () => {
-      logger.sidepanel.info('开始加载任务列表');
-
-      let stored = { finished: [], pending: [], running: [] };
-      let configs: ApiConfig[] = [];
-
-      // Handle Chrome API availability
-      try {
-        if (typeof chrome !== 'undefined' && chrome.storage) {
-          const result = await chrome.storage.local.get(['apiConfig']);
-          if (Array.isArray(result.apiConfig)) configs = result.apiConfig;
-          else if (result.apiConfig) configs = [result.apiConfig];
-
-          // 从indexdb中读取tasks
-          const tasksStateResult = await chrome.runtime.sendMessage({type: 'getTasksState'});
-          console.log('取得任务列表: ', tasksStateResult)
-          if (tasksStateResult.tasks) {
-            stored = tasksStateResult.tasks
-          }
-
-        }
-      } catch (error) {
-        logger.sidepanel.info('Chrome storage not available, using sample data');
-      }
-
-      logger.sidepanel.info('从 chrome.storage.local 获取到的任务列表', stored);
-      setApiConfigs(configs);
-      const current = configs.find(c => c.currentUsing) || configs[0];
-      setCurrentProvider(current ? current.provider : '');
-      
-      // 只显示已完成的任务
-      const finishedTasks = stored.finished || [];
-      const pendingTasks = stored.pending || [];
-      const runningTasks = stored.running || [];
-      
-      // Add sample markdown data for testing if no tasks exist
-      if (finishedTasks.length === 0) {
-        setTasks([]);
-      } else {
-        setTasks([...runningTasks, ...finishedTasks]);
-      }
-      
-      setPendingCount(pendingTasks.length);
-      setRunningCount(runningTasks.length);
-      logger.sidepanel.info('任务列表加载完成', {
-        finished: finishedTasks.length,
-        pending: pendingTasks.length,
-        running: runningTasks.length
-      });
-    };
-    
-    const handleStorage = (
-      changes: { [key: string]: chrome.storage.StorageChange },
-      area: string,
-    ) => {
-      logger.sidepanel.info('存储变化事件', { area, changes });
-      if (area === 'local') {
-        if (changes.tasks) {
-          const newValue = changes.tasks.newValue || { finished: [], pending: [], running: [] };
-          const finishedTasks = newValue.finished || [];
-          const pendingTasks = newValue.pending || [];
-          const runningTasks = newValue.running || [];
-
-          logger.sidepanel.info('任务列表已更新', {
-            finished: finishedTasks.length,
-            pending: pendingTasks.length,
-            running: runningTasks.length
-          });
-          setTasks([...runningTasks, ...finishedTasks]);
-          setPendingCount(pendingTasks.length);
-          setRunningCount(runningTasks.length);
-        }
-        if (changes.apiConfig) {
-          const list = changes.apiConfig.newValue || [];
-          setApiConfigs(list);
-          const current = list.find((c: ApiConfig) => c.currentUsing) || list[0];
-          setCurrentProvider(current ? current.provider : '');
-        }
-      }
-    };
-    
-    load();
-    logger.sidepanel.info('添加存储变化监听器');
-    chrome.storage.onChanged.addListener(handleStorage);
-
-    
+    // Set initial language from storage or default to browser language
     (async () => {
-       // Set initial language from storage or default to browser language
       const { language } = await chrome.storage.local.get('language');
       if (language) {
-          setLanguage(normalizeLang(language));
-          // console.log('Setting initial language to:', language);
+        setLanguage(normalizeLang(language));
       } else {
-          const browserLang = chrome.i18n.getUILanguage();
-          // console.log('Setting initial language to:', browserLang);
-          setLanguage(normalizeLang(language));
-          await chrome.storage.local.set({ language: browserLang });
+        const browserLang = chrome.i18n.getUILanguage();
+        setLanguage(normalizeLang(browserLang));
+        await chrome.storage.local.set({ language: browserLang });
       }
-    })()
-
-    return () => {
-      logger.sidepanel.info('移除存储变化监听器');
-      chrome.storage.onChanged.removeListener(handleStorage);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleMessage = (
-      message: any,
-      sender: chrome.runtime.MessageSender,
-      _sendResponse: (response?: any) => void
-    ) => {
-      logger.sidepanel.info('收到消息', { message, sender });
-      if (message?.type === 'tasksStateUpdated') {
-        logger.sidepanel.info('任务状态变化，重新加载任务列表（从后台）');
-        chrome.runtime
-          .sendMessage({ type: 'getTasksState' })
-          .then((result) => {
-            const stored = (result?.tasks || { finished: [], pending: [], running: [] });
-            logger.sidepanel.info('重新加载的任务列表', stored);
-            const finishedTasks = stored.finished || [];
-            const pendingTasks = stored.pending || [];
-            const runningTasks = stored.running || [];
-            setTasks([...runningTasks, ...finishedTasks]);
-            setPendingCount(pendingTasks.length);
-            setRunningCount(runningTasks.length);
-          })
-          .catch((err) => logger.sidepanel.error('获取任务状态失败', err));
-      }
-      return false; // 不保持消息通道开放
-    };
-
-    logger.sidepanel.info('添加消息监听器');
-    chrome.runtime.onMessage.addListener(handleMessage);
-    return () => {
-      logger.sidepanel.info('移除消息监听器');
-      chrome.runtime.onMessage.removeListener(handleMessage);
-    };
-  }, []);
+    })();
+  }, [setLanguage]);
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -228,8 +101,13 @@ function SidePanelInner() {
       {/* 控制面板 - 现代化设计 */}
       <section className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-700/50 px-4 py-4">
         <div className="flex flex-col gap-4">
-          {/* 选择模型 */}
-          {apiConfigs.length > 0 && (
+          {/* 选择模型 - 骨架屏 */}
+          {isLoading ? (
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+            </div>
+          ) : apiConfigs.length > 0 && (
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t('api_provider')}
@@ -250,25 +128,57 @@ function SidePanelInner() {
 
           {/* 任务状态统计 */}
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
-              <div className="w-3 h-3 bg-status-pending rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('status_pending')}: <span className="text-primary-600 dark:text-primary-400">{pendingCount}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
-              <div className="w-3 h-3 bg-status-running rounded-full animate-spin-slow"></div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {t('status_running')}: <span className="text-primary-600 dark:text-primary-400">{runningCount}</span>
-              </span>
-            </div>
+            {isLoading ? (
+              <>
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-status-pending rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('status_pending')}: <span className="text-primary-600 dark:text-primary-400">{pendingCount}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                  <div className="w-3 h-3 bg-status-running rounded-full animate-spin-slow"></div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('status_running')}: <span className="text-primary-600 dark:text-primary-400">{runningCount}</span>
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </section>
 
       {/* 任务列表 - 网格布局 */}
       <main className="flex-1 p-4">
-        {tasks.length > 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(4)].map((_, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 animate-pulse">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-6"></div>
+                </div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-2"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                <div className="flex items-center justify-between mt-4">
+                  <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                  <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : tasks.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {tasks.map((task) => (
               <ResultItem
@@ -296,16 +206,22 @@ function SidePanelInner() {
         )}
       </main>
 
-      {/* 模态框 */}
-      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {/* 模态框 - 使用Suspense包裹懒加载组件 */}
+      {showSettings && (
+        <Suspense fallback={null}>
+          <SettingsModal onClose={() => setShowSettings(false)} />
+        </Suspense>
+      )}
       {showResultModal && selectedTask && (
-        <ResultModal
-          id={selectedTask.id}
-          isOpen={showResultModal}
-          onClose={handleCloseResultModal}
-          title={selectedTask.title ?? selectedTask.domain}
-          domain={selectedTask.domain}
-        />
+        <Suspense fallback={null}>
+          <ResultModal
+            id={selectedTask.id}
+            isOpen={showResultModal}
+            onClose={handleCloseResultModal}
+            title={selectedTask.title ?? selectedTask.domain}
+            domain={selectedTask.domain}
+          />
+        </Suspense>
       )}
     </div>
   );

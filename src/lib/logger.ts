@@ -19,6 +19,17 @@ export enum LogSource {
   WORKER = 'WORKER'
 }
 
+// 环境检测 - 简单判断是否为开发环境
+const isDevelopment = () => {
+  try {
+    return process.env.NODE_ENV === 'development' || 
+           typeof process === 'undefined' || 
+           !process.env.NODE_ENV;
+  } catch {
+    return true; // 默认认为是开发环境
+  }
+};
+
 /**
  * 格式化日志输出
  * @param source 日志来源
@@ -32,6 +43,11 @@ export function log(
   message: string,
   data?: any
 ): void {
+  // 在生产环境中只记录ERROR和WARN级别日志
+  if (!isDevelopment() && (level === LogLevel.DEBUG || level === LogLevel.INFO)) {
+    return;
+  }
+  
   const timestamp = new Date().toISOString();
   const prefix = `[${timestamp}][${source}][${level}]`;
   

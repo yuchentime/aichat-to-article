@@ -12,7 +12,7 @@ type ResultItemProps = {
   onViewResult: (task: Task) => void;
 };
 
-const ResultItem: React.FC<ResultItemProps> = ({
+const ResultItem: React.FC<ResultItemProps> = React.memo(({
   task,
   onDelete,
   onViewResult,
@@ -176,6 +176,12 @@ const ResultItem: React.FC<ResultItemProps> = ({
       )}
     </article>
   );
-};
+}, (prevProps, nextProps) => {
+  // 只有当task对象发生变化时才重新渲染
+  return prevProps.task.id === nextProps.task.id && 
+         prevProps.task.status === nextProps.task.status &&
+         prevProps.task.synced === nextProps.task.synced &&
+         prevProps.task.summary === nextProps.task.summary;
+});
 
 export default ResultItem;
