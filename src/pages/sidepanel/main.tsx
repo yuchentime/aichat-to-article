@@ -29,12 +29,14 @@ function SidePanelInner() {
   const deleteTask = async (id: string) => {
     try {
       logger.sidepanel.info('删除任务', { id });
-      const { tasks: stored = { finished: [], pending: [], running: [] } } = await chrome.storage.local.get('tasks');
-      const updatedFinished = (stored.finished || []).filter((t: Task) => t.id !== id);
-      const updatedRunning = (stored.running || []).filter((t: Task) => t.id !== id);
-      const updatedState = { ...stored, finished: updatedFinished, running: updatedRunning };
-      await chrome.storage.local.set({ tasks: updatedState });
-      setTasks(prev => prev.filter(t => t.id !== id));
+      // const { tasks: stored = { finished: [], pending: [], running: [] } } = await chrome.storage.local.get('tasks');
+      // const updatedFinished = (stored.finished || []).filter((t: Task) => t.id !== id);
+      // const updatedRunning = (stored.running || []).filter((t: Task) => t.id !== id);
+      // const updatedState = { ...stored, finished: updatedFinished, running: updatedRunning };
+      chrome.runtime.sendMessage({type: 'deleteTaskById', id}).then(() => {
+        setTasks(prev => prev.filter(t => t.id !== id));
+      });
+      
       logger.sidepanel.info('任务已从存储中删除', { id });
     } catch (err) {
       logger.sidepanel.error('删除任务失败', err);
@@ -277,7 +279,7 @@ function SidePanelInner() {
               <ResultItem
                 key={task.id}
                 task={task}
-                onDelete={deleteTask}
+                onDelete={() => deleteTask(task.id)}
                 onViewResult={handleViewResult}
               />
             ))}

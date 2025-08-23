@@ -1,5 +1,5 @@
 import { logger } from '@/lib/logger';
-import { getTasksState as dbGetTasksState, putTasksState as dbPutTasksState, getResultBlob as dbGetResultBlob, putResultBlob as dbPutResultBlob } from '@/lib/db';
+import { deleteTask, getTasksState as dbGetTasksState, putTasksState as dbPutTasksState, getResultBlob as dbGetResultBlob, putResultBlob as dbPutResultBlob } from '@/lib/db';
 
 export type TaskBuckets = Record<'pending' | 'running' | 'finished', Task[]>;
 
@@ -87,4 +87,9 @@ export const getResult = async (id: string): Promise<string | null> => {
     return null;
   }
 };
+
+export const deleteTaskById = async (id: string) => {
+  logger.background.info('删除任务', { id });
+  await deleteTask(id)
+}
 

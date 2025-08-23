@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger';
 import { ensureContextMenus, registerContextMenuClickHandler } from './contextMenus';
-import { hydrateState, isHydrated, getTaskState, getResult } from './state';
+import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById } from './state';
 import { submitGenerateTask } from './queue';
 
 // 创建右键菜单，仅在指定域名下显示
@@ -87,6 +87,19 @@ chrome.runtime.onMessage.addListener((
       try {
         if (!isHydrated()) await hydrateState();
         respond({ ok: true, tasks: await getTaskState() });
+      } catch (e) {
+        logger.background.error('获取任务状态失败?', { error: String(e) });
+        respond({ ok: false, error: String(e) });
+      }
+    })();
+    return true;
+  }
+
+  if (message?.type === 'deleteTaskById') {
+    (async () => {
+      try {
+        deleteTaskById(message.id);
+        respond({ ok: true});
       } catch (e) {
         logger.background.error('获取任务状态失败?', { error: String(e) });
         respond({ ok: false, error: String(e) });

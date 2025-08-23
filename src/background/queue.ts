@@ -85,7 +85,7 @@ const runGenerateArticleTask = async (task: Task) => {
   // 添加超时机制
   const timeoutPromise = new Promise<never>((_, reject) => {
     setTimeout(() => {
-      reject(new Error('任务执行超时（60秒）'));
+      reject(new Error(getTextByLang(lang, "taskTimeout")));
     }, 60000); // 30秒超时
   });
 
@@ -119,7 +119,7 @@ const runGenerateArticleTask = async (task: Task) => {
       // 强制更新状态，避免任务卡在running
       taskState.running = taskState.running.filter((t) => t.id !== task.id);
       task.status = 'finished';
-      task.error = `处理错误时发生异常: ${errMsg}`;
+      task.error = `${errMsg}`;
       taskState.finished.push(task);
       
       try {
@@ -186,13 +186,12 @@ export const submitGenerateTask = async (
   respond: (payload: any) => void,
 ) => {
   try {
-    // Prevent duplicate tasks with the same taskId that are pending or running
     if (
       taskState.pending.some((t) => t.taskId === taskId) ||
       taskState.running.some((t) => t.taskId === taskId)
     ) {
       logger.background.warn(`任务已存在，跳过添加 ${taskId}`);
-      respond({ ok: false, error: 'Task already exists' });
+      respond({ ok: false, error: getTextByLang(navigator.language, 'taskAlreadyExists') });
       return;
     }
 
@@ -201,7 +200,7 @@ export const submitGenerateTask = async (
 
     if (!apiConfig || (Array.isArray(apiConfig) && apiConfig.length === 0)) {
       logger.background.error('没有可用的API配置');
-      respond({ ok: false, error: 'No API configuration available' });
+      respond({ ok: false, error: getTextByLang(navigator.language, 'noApi') });
       return;
     }
 

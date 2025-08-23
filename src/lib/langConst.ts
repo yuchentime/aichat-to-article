@@ -12,6 +12,9 @@ export const getTextByLang = (lang: string, key: string): string => {
             noTitle: 'No Title',
             tokenInvalid: 'Token is missing or invalid.',
             tokenExhausted: 'Please check if the token quota is exhausted or try again later.',
+            taskTimeout: 'Task Timeout',
+            taskAlreadyExists: 'Task already exists',
+            noApi: 'No API configuration available',
         },
         'zh-CN': {
             taskAdded: '任务已加入队列。',
@@ -24,6 +27,9 @@ export const getTextByLang = (lang: string, key: string): string => {
             noTitle: '无标题',
             tokenInvalid: 'Token不存在或无效。',
             tokenExhausted: '请检查Token用量是否已用尽，或稍后再试。',
+            taskTimeout: '任务超时',
+            taskAlreadyExists: '任务已经存在',
+            noApi: '没有配置大模型API'
         },
         'zh-TW': {
             taskAdded: '任務已加入隊列。',
@@ -36,6 +42,9 @@ export const getTextByLang = (lang: string, key: string): string => {
             noTitle: '無標題',
             tokenInvalid: 'Token不存在或無效。',
             tokenExhausted: '請檢查Token用量是否已用盡，或稍後再試。',
+            taskTimeout: '任務超時',
+            taskAlreadyExists: '任務已經存在',
+            noApi: '沒有配置大模型API'
         },
     };
     

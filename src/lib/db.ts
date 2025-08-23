@@ -36,3 +36,15 @@ export async function getResultBlob(id: string): Promise<string | null> {
   const rec = await db.results.get(id);
   return rec?.result ?? null;
 }
+
+export async function deleteTask(id: string) {
+  await db.results.delete(id);
+  const persisted: TaskBuckets = (await getTasksState()) || { pending: [], running: [], finished: [] };
+  const updatedFinishedTasks = persisted.finished.filter(task => task.id !== id);
+  const updatedRunningTasks = persisted.running.filter(task => task.id !== id);
+  await putTasksState({
+    pending: persisted.pending,
+    running: updatedRunningTasks,
+    finished: updatedFinishedTasks
+  })
+}
