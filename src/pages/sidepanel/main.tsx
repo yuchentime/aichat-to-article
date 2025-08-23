@@ -169,24 +169,28 @@ function SidePanelInner() {
     const handleMessage = (
       message: any,
       sender: chrome.runtime.MessageSender,
-      sendResponse: (response?: any) => void
+      _sendResponse: (response?: any) => void
     ) => {
       logger.sidepanel.info('收到消息', { message, sender });
-      if (message?.type === 'taskStatusChanged') {
-        logger.sidepanel.info('任务状态变化，重新加载任务列表');
-        chrome.storage.local.get('tasks').then(({ tasks: stored = { finished: [], pending: [], running: [] } }) => {
-          logger.sidepanel.info('重新加载的任务列表', stored);
-          const finishedTasks = stored.finished || [];
-          const pendingTasks = stored.pending || [];
-          const runningTasks = stored.running || [];
-          setTasks(finishedTasks);
-          setPendingCount(pendingTasks.length);
-          setRunningCount(runningTasks.length);
-        });
+      if (message?.type === 'tasksStateUpdated') {
+        logger.sidepanel.info('任务状态变化，重新加载任务列表（从后台）');
+        chrome.runtime
+          .sendMessage({ type: 'getTasksState' })
+          .then((result) => {
+            const stored = (result?.tasks || { finished: [], pending: [], running: [] });
+            logger.sidepanel.info('重新加载的任务列表', stored);
+            const finishedTasks = stored.finished || [];
+            const pendingTasks = stored.pending || [];
+            const runningTasks = stored.running || [];
+            setTasks([...runningTasks, ...finishedTasks]);
+            setPendingCount(pendingTasks.length);
+            setRunningCount(runningTasks.length);
+          })
+          .catch((err) => logger.sidepanel.error('获取任务状态失败', err));
       }
       return false; // 不保持消息通道开放
     };
-    
+
     logger.sidepanel.info('添加消息监听器');
     chrome.runtime.onMessage.addListener(handleMessage);
     return () => {
