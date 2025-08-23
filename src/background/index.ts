@@ -59,13 +59,12 @@ const saveState = async () => {
     await hydrateState();
   }
   // After ensuring we are merged with persisted state, write back
-  // After ensuring we are merged with persisted state, write back
   logger.background.info('save state', {
     running: taskState.running.length,
     finished: taskState.finished.length,
   });
   await dbPutTasksState(taskState);
-  await chrome.storage.local.set({ tasks: taskState });
+  // await chrome.storage.local.set({ tasks: taskState });
   try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
   logger.background.info('state persisted');
 };
@@ -221,14 +220,14 @@ const setBadgeText = (text: string) => {
 const processQueue = async () => {
   logger.background.info('process queue', { queueLength: taskQueue.length, processing });
   if (processing) {
-  if (processing) {
     logger.background.info('already processing, skip');
+    return;
   }
   
   const task = taskQueue.shift();
   if (!task) {
-  if (!task) {
     logger.background.info('queue empty');
+    return;
   }
   
   logger.background.info('start processing', { taskId: task.id, action: task.action });
@@ -244,10 +243,8 @@ const processQueue = async () => {
   try {
     await saveState();
   } catch (e) {
-    logger.background.error('保存任务状态失�?, { taskId: task.id, error: String(e) });
+    logger.background.error('保存任务状态失败?', { taskId: task.id, error: String(e) });
   }
-
-  logger.background.info('发送队列进度消�?, { task });
 
   // �?MV3 的扩�?Service Worker 中，创建 Web Worker 存在兼容�?权限限制�?
   // 为保证稳定性，直接�?Service Worker 主线程执行任务�?
@@ -255,7 +252,7 @@ const processQueue = async () => {
     runGenerateArticleTask(task)
       .catch(async (e) => {
         const errMsg = e instanceof Error ? e.message : String(e);
-        logger.background.error('任务执行过程中出现未捕获的异�?, { taskId: task.id, error: errMsg });
+        logger.background.error('任务执行过程中出现未捕获的异常?', { taskId: task.id, error: errMsg });
         sendNotification(getTextByLang(navigator.language, 'taskFailed'), errMsg || getTextByLang(navigator.language, 'taskFailedDesc'));
         taskState.running = taskState.running.filter(t => t.id !== task.id);
         task.status = 'finished';
@@ -264,7 +261,7 @@ const processQueue = async () => {
         try {
           await saveState();
         } catch (err) {
-          logger.background.error('保存任务状态失�?, { taskId: task.id, error: String(err) });
+          logger.background.error('保存任务状态失败?', { taskId: task.id, error: String(err) });
         }
         processing = false;
         processQueue();
@@ -296,7 +293,7 @@ chrome.runtime.onInstalled.addListener(() => {
   const documentUrlPatterns = allowedHosts.map(host => `*://${host}/*`);
   chrome.contextMenus.create({
     id: 'save_to_notion',
-    title: 'Save to Notion',
+    title: 'Generate Post',
     contexts: ['all'],
     documentUrlPatterns,
   });
@@ -379,13 +376,14 @@ chrome.runtime.onMessage.addListener((
     });
     return true; // Keep message channel open for async response
   } else if ((message as any)?.type === 'getTasksState') {
-    (async () =      try {
+    (async () => {
+      try {
         if (!hydrated) {
           await hydrateState();
         }
         respond({ ok: true, tasks: taskState });
       } catch (e) {
-        logger.background.error('获取任务状态失�?, { error: String(e) });
+        logger.background.error('获取任务状态失败?', { error: String(e) });
         respond({ ok: false, error: String(e) });
       }
     })();
@@ -434,6 +432,5 @@ const submitTask = async (domain: string, url: string, messages: string[], taskI
       sendNotification(getTextByLang(navigator.language, 'taskFailed'), getTextByLang(navigator.language, 'taskFailedDesc'));
       respond({ ok: false, error: String(err) });
     }
-}
-
+  }
 }

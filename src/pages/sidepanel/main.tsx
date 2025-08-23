@@ -68,10 +68,16 @@ function SidePanelInner() {
       // Handle Chrome API availability
       try {
         if (typeof chrome !== 'undefined' && chrome.storage) {
-          const result = await chrome.storage.local.get(['tasks', 'apiConfig']);
-          stored = result.tasks || stored;
+          const result = await chrome.storage.local.get(['apiConfig']);
           if (Array.isArray(result.apiConfig)) configs = result.apiConfig;
           else if (result.apiConfig) configs = [result.apiConfig];
+
+          // 从indexdb中读取tasks
+          const tasksStateResult = await chrome.runtime.sendMessage({type: 'getTasksState'});
+          if (tasksStateResult.tasks) {
+            stored = tasksStateResult.tasks
+          }
+
         }
       } catch (error) {
         logger.sidepanel.info('Chrome storage not available, using sample data');
