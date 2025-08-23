@@ -1,8 +1,5 @@
 import { generateArticle } from '../api/chatApi';
 import { logger } from '../lib/logger';
-import { getTasksState as dbGetTasksState, putTasksState as dbPutTasksState, getResultBlob as dbGetResultBlob, putResultBlob as dbPutResultBlob } from '../lib/db';
-import { getTextByLang } from '@/lib/langConst';
-import { get } from 'http';
 
 // 创建右键菜单，仅在指定域名下显示
 const allowedHosts = ['chatgpt.com', 'grok.com'];
@@ -22,7 +19,8 @@ let hydrated = false;
 // Merge storage state with in-memory state, preferring in-memory on conflicts.
 const hydrateState = async () => {
   try {
-    const persisted: Record<'pending' | 'running' | 'finished', Task[]> = (await dbGetTasksState()) || { pending: [], running: [], finished: [] };
+    const stored = await chrome.storage.local.get('tasks');
+    const persisted: Record<'pending' | 'running' | 'finished', Task[]> = stored?.tasks || { pending: [], running: [], finished: [] };
 
     // Build a unified map by id; prefer current (in-memory) snapshot when duplicated
     const allPersisted = [...(persisted.pending || []), ...(persisted.running || []), ...(persisted.finished || [])];
@@ -43,13 +41,13 @@ const hydrateState = async () => {
     taskState.running = next.running;
     taskState.finished = next.finished;
     hydrated = true;
-    logger.background.info('hydrate done', {
+    logger.background.info('已从存储中hydrate任务状�?, {
       pending: taskState.pending.length,
       running: taskState.running.length,
       finished: taskState.finished.length,
     });
   } catch (e) {
-    logger.background.error('hydrate failed', { error: String(e) });
+    logger.background.error('hydrate任务状态失�?, { error: String(e) });
   }
 };
 
@@ -59,38 +57,37 @@ const saveState = async () => {
     await hydrateState();
   }
   // After ensuring we are merged with persisted state, write back
-  // After ensuring we are merged with persisted state, write back
-  logger.background.info('save state', {
+  logger.background.info('保存任务状�?, {
+    pending: taskState.pending.length,
     running: taskState.running.length,
     finished: taskState.finished.length,
   });
-  await dbPutTasksState(taskState);
   await chrome.storage.local.set({ tasks: taskState });
-  try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
-  logger.background.info('state persisted');
+  logger.background.info('任务状态已保存到存�?);
 };
 
-// 保存：以变量 id 作为键名；用 try/catch 让调用方�?await/捕获错误
+// 保存：以变量 id 作为键名；用 try/catch 让调用方�?await/捕获错误
 const saveResult = async (id: string, result: string): Promise<void> => {
   logger.background.info('保存任务结果', { id, result });
   try {
-    await dbPutResultBlob(id, result);
+    await chrome.storage.local.set({ [id]: result });
     logger.background.info('任务结果已保存到存储', { id });
   } catch (error) {
     logger.background.error('保存任务结果失败', { id, error: String(error) });
-    throw error; // 让调用方可感知失�?  }
+    throw error; // 让调用方可感知失�?
+  }
 };
 
-// 读取：区分“未找到”和“空字符串”；并捕获异�?
+// 读取：区分“未找到”和“空字符串”；并捕获异�?
 const getResult = async (id: string): Promise<string | null> => {
   logger.background.info('获取任务结果', { id });
   try {
-    const blob = await dbGetResultBlob(id);
-    if (blob !== null) {
-      logger.background.info('result fetched from IndexedDB', { id });
-      return blob; // 可能是空字符�?""
+    const stored = await chrome.storage.local.get(id); // 形如 { [id]: value } �?{}
+    if (Object.prototype.hasOwnProperty.call(stored, id)) {
+      logger.background.info('任务结果已从存储中获�?, { id });
+      return stored[id] as string; // 可能是空字符�?""
     }
-    logger.background.warn('result not found (IndexedDB)', { id });
+    logger.background.warn('未找到任务结�?, { id });
     return null;
   } catch (error) {
     logger.background.error('读取任务结果失败', { id, error: String(error) });
@@ -104,18 +101,18 @@ const sendNotification = (title: string, message: string) => {
     logger.background.info('通知权限级别', { level });
 
     if (level === 'denied') {
-      logger.background.warn('notifications permission denied');
+      logger.background.warn('浏览器通知权限被拒�?);
       return;
     }
 
-    // 使用�?manifest 中一致的打包内资源路�?
+    // 使用�?manifest 中一致的打包内资源路�?
     const iconUrl = chrome.runtime.getURL('src/assets/img/icon-128.png');
     const options: chrome.notifications.NotificationOptions = {
       type: 'basic',
       title,
       message,
       priority: 2,
-      iconUrl, // 对于 basic 类型，iconUrl 是必�?
+      iconUrl, // 对于 basic 类型，iconUrl 是必�?
     } as any;
 
     logger.background.info('创建通知', { title, message, iconUrl });
@@ -123,20 +120,20 @@ const sendNotification = (title: string, message: string) => {
     chrome.notifications.create(options, (notificationId) => {
       const lastError = chrome.runtime.lastError?.message;
       if (lastError) {
-        logger.background.error('notification send failed', { error: lastError, title, message, iconUrl });
+        logger.background.error('通知发送失�?, { error: lastError, title, message, iconUrl });
         return;
       }
       if (notificationId) {
-        logger.background.info('notification sent', { notificationId, title, message });
+        logger.background.info('通知发送成�?, { notificationId, title, message });
       } else {
-        logger.background.error('notification send failed (unknown)', { title, message });
+        logger.background.error('通知发送失败（未知原因�?, { title, message });
       }
     });
   });
 }
 
 const runGenerateArticleTask = async (task: Task) => {
-  logger.background.info('run task', { taskId: task.id, action: task.action, domain: task.domain });
+  logger.background.info('开始执行任�?, { taskId: task.id, action: task.action, domain: task.domain });
   
   const finalize = async (result?: string, error?: string) => {
     logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
@@ -172,22 +169,22 @@ const runGenerateArticleTask = async (task: Task) => {
 
       // 发送浏览器通知
       if (result) {
-        sendNotification(getTextByLang(navigator.language, 'taskFinished'), getTextByLang(navigator.language, 'taskFinishedDesc'));
+        sendNotification('任务完成', '文章已经生成，请打开SidePanel查看�?);
       } else if (error) {
-        sendNotification(getTextByLang(navigator.language, 'taskFailed'), error || getTextByLang(navigator.language, 'taskFailed'));
+        sendNotification('任务失败', error || '任务执行失败�?);
       }
 
       logger.background.info('任务状态已更新为已完成', { taskId: task.id });
       try {
         await saveState();
       } catch (e) {
-        logger.background.error('save state failed', { taskId: task.id, error: String(e) });
+        logger.background.error('保存任务状态失�?, { taskId: task.id, error: String(e) });
       }
 
-      logger.background.info('queue progress', { task });
+      logger.background.info('发送队列进度消�?, { task });
     } finally {
       processing = false;
-      logger.background.info('process next in queue');
+      logger.background.info('继续处理队列中的下一个任�?);
       processQueue();
     }
   };
@@ -219,19 +216,19 @@ const setBadgeText = (text: string) => {
 }
 
 const processQueue = async () => {
-  logger.background.info('process queue', { queueLength: taskQueue.length, processing });
+  logger.background.info('处理任务队列', { queueLength: taskQueue.length, processing });
   if (processing) {
-  if (processing) {
-    logger.background.info('already processing, skip');
+    logger.background.info('已有任务正在处理，跳�?);
+    return;
   }
   
   const task = taskQueue.shift();
   if (!task) {
-  if (!task) {
-    logger.background.info('queue empty');
+    logger.background.info('队列为空，无任务可处�?);
+    return;
   }
   
-  logger.background.info('start processing', { taskId: task.id, action: task.action });
+  logger.background.info('开始处理任�?, { taskId: task.id, action: task.action });
   processing = true;
 
   taskState.pending = taskState.pending.filter(t => t.id !== task.id);
@@ -244,19 +241,19 @@ const processQueue = async () => {
   try {
     await saveState();
   } catch (e) {
-    logger.background.error('保存任务状态失�?, { taskId: task.id, error: String(e) });
+    logger.background.error('保存任务状态失�?, { taskId: task.id, error: String(e) });
   }
 
-  logger.background.info('发送队列进度消�?, { task });
+  logger.background.info('发送队列进度消�?, { task });
 
-  // �?MV3 的扩�?Service Worker 中，创建 Web Worker 存在兼容�?权限限制�?
-  // 为保证稳定性，直接�?Service Worker 主线程执行任务�?
+  // �?MV3 的扩�?Service Worker 中，创建 Web Worker 存在兼容�?权限限制�?
+  // 为保证稳定性，直接�?Service Worker 主线程执行任务�?
   if (task.action === 'generateArticle') {
     runGenerateArticleTask(task)
       .catch(async (e) => {
         const errMsg = e instanceof Error ? e.message : String(e);
-        logger.background.error('任务执行过程中出现未捕获的异�?, { taskId: task.id, error: errMsg });
-        sendNotification(getTextByLang(navigator.language, 'taskFailed'), errMsg || getTextByLang(navigator.language, 'taskFailedDesc'));
+        logger.background.error('任务执行过程中出现未捕获的异�?, { taskId: task.id, error: errMsg });
+        sendNotification('任务失败', '任务执行失败�?);
         taskState.running = taskState.running.filter(t => t.id !== task.id);
         task.status = 'finished';
         task.error = errMsg;
@@ -264,7 +261,7 @@ const processQueue = async () => {
         try {
           await saveState();
         } catch (err) {
-          logger.background.error('保存任务状态失�?, { taskId: task.id, error: String(err) });
+          logger.background.error('保存任务状态失�?, { taskId: task.id, error: String(err) });
         }
         processing = false;
         processQueue();
@@ -274,17 +271,17 @@ const processQueue = async () => {
   }
 };
 
-// 跟踪侧边栏状�?
+// 跟踪侧边栏状�?
 let sidePanelOpen = false;
 
 chrome.action.onClicked.addListener((tab) => {
-  // 切换侧边栏状�?
+  // 切换侧边栏状�?
   if (sidePanelOpen) {
-    // 关闭侧边�?
+    // 关闭侧边�?
     chrome.sidePanel.setPanelBehavior({openPanelOnActionClick: false});
     sidePanelOpen = false;
   } else {
-    // 打开侧边�?
+    // 打开侧边�?
     chrome.sidePanel.setPanelBehavior({openPanelOnActionClick: true});
     sidePanelOpen = true;
   }
@@ -352,9 +349,9 @@ chrome.runtime.onMessage.addListener((
       respond({ ok: false, error: 'Invalid payload' });
       return false;
     }
-    logger.background.info(`收到任务请求�?{taskId}, 域名�?{domain}, 消息数量�?{messages.length}`);
+    logger.background.info(`收到任务请求�?{taskId}, 域名�?{domain}, 消息数量�?{messages.length}`);
     if (taskQueue.some(t => t.taskId === taskId && (t.status === 'pending' || t.status === 'running'))) {
-      logger.background.warn(`任务已存在，跳过添加�?{taskId}`);
+      logger.background.warn(`任务已存在，跳过添加�?{taskId}`);
       respond({ ok: false, error: 'Task already exists' });
       return false;
     }
@@ -378,19 +375,6 @@ chrome.runtime.onMessage.addListener((
       respond({ ok: false, error: String(error) });
     });
     return true; // Keep message channel open for async response
-  } else if ((message as any)?.type === 'getTasksState') {
-    (async () =      try {
-        if (!hydrated) {
-          await hydrateState();
-        }
-        respond({ ok: true, tasks: taskState });
-      } catch (e) {
-        logger.background.error('获取任务状态失�?, { error: String(e) });
-        respond({ ok: false, error: String(e) });
-      }
-    })();
-    return true;
-
   }
 
   return false;
@@ -408,11 +392,30 @@ const submitTask = async (domain: string, url: string, messages: string[], taskI
         return;
       }
       
+      // 测试通知功能
+      const testNotification = () => {
+        logger.background.info('测试通知功能');
+        sendNotification('测试通知', '这是一个测试通知，用于验证通知功能是否正常工作');
+      };
+      
+      // 添加测试命令到消息监听器
+      chrome.runtime.onMessage.addListener((message: any) => {
+        // ... 现有的消息处理代�?...
+        
+        // 添加测试通知的命�?
+        if (message.type === 'testNotification') {
+          testNotification();
+          return true;
+        }
+        
+        return false;
+      });
+      
       let configs: any[] = [];
       if (Array.isArray(apiConfig)) configs = apiConfig;
       else if (apiConfig) configs = [apiConfig];
       const current = configs.find((c: any) => c.currentUsing) || configs[0] || {};
-      const task: Task = {
+      const task: QueueTask = {
         id: `task-${Date.now()}`,
         taskId,
         action,
@@ -431,9 +434,8 @@ const submitTask = async (domain: string, url: string, messages: string[], taskI
       respond({ ok: true, id: taskId });
     } catch (err) {
       logger.background.error('获取配置失败', err);
-      sendNotification(getTextByLang(navigator.language, 'taskFailed'), getTextByLang(navigator.language, 'taskFailedDesc'));
+      sendNotification('任务失败', '任务执行失败�?);
       respond({ ok: false, error: String(err) });
     }
 }
 
-}

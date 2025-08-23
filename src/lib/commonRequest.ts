@@ -1,3 +1,4 @@
+import { getTextByLang } from '@/lib/langConst';
 
 const commonRequest = async (
     apiUrl: string,
@@ -16,13 +17,12 @@ const commonRequest = async (
         console.log('API请求响应:', response);
         if (!response.ok) {
             let errorText = '';
-            try {
-                const errData = await response.json();
-                errorText = errData.error?.message || errData.message || '';
-            } catch (e) {
-                // ignore json parse error
+            if (errorText === '' && response.status === 401) {
+               errorText = getTextByLang(navigator.language, 'tokenInvalid') || 'Token is missing or invalid';
+            } else if (errorText === '') {
+               errorText = getTextByLang(navigator.language, 'tokenExhausted') || 'Please check if the token quota is exhausted or try again later';
             }
-            const err: any = new Error(errorText || `HTTP error! status: ${response.status}`);
+            const err: any = new Error(errorText);
             err.status = response.status;
             throw err;
         }
