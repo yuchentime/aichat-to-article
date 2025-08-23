@@ -1,6 +1,9 @@
 import React from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useI18n } from '../../lib/i18n';
+import { notionConfigStore } from '../../lib/storage';
+import { NotionAPI } from '../../api/notionApi';
+import { decrypt } from '../../lib/crypto';
 import chatgptLogo from '@/assets/img/chatgpt.png';
 import grokLogo from '@/assets/img/grok.png';
 
@@ -23,7 +26,114 @@ const ResultModal: React.FC<ResultModalProps> = ({
   const { t } = useI18n();
 
   const syncToNotion = async () => {
+    try {
+      // Check if Notion is configured
+      const notionConfig = await notionConfigStore.get();
+      
+      if (!notionConfig.isConfigured) {
+        // Open settings modal to configure Notion
+        chrome.runtime.sendMessage({
+          type: 'openSettings'
+        });
+        return;
+      }
 
+      // Decrypt the API key
+      const apiKey = notionConfig.apiKey ? await decrypt(notionConfig.apiKey) : '';
+      
+      if (!apiKey || !notionConfig.databaseId) {
+        throw new Error('Notion configuration is incomplete');
+      }
+
+      // Initialize Notion API
+      const notion = new NotionAPI(apiKey);
+
+      // Convert markdown to Notion blocks
+      const blocks = convertMarkdownToNotionBlocks(content);
+
+      // Create page in Notion
+      const result = await notion.createPage({
+        parent: { database_id: notionConfig.databaseId },
+        properties: {
+          title: {
+            title: [
+              {
+                type: 'text',
+                text: { content: title }
+              }
+            ]
+          }
+        },
+        children: blocks
+      });
+
+      // Update task sync status
+      chrome.runtime.sendMessage({
+        type: 'updateTaskSyncStatus',
+        id,
+        synced: true,
+        notionUrl: result.url
+      });
+
+      // Show success notification
+      chrome.runtime.sendMessage({
+        type: 'showNotification',
+        title: '同步成功',
+        message: '内容已成功保存到 Notion',
+        url: result.url
+      });
+
+    } catch (error) {
+      console.error('Failed to sync to Notion:', error);
+      
+      // Show error notification
+      chrome.runtime.sendMessage({
+        type: 'showNotification',
+        title: '同步失败',
+        message: error instanceof Error ? error.message : '同步到 Notion 时发生错误'
+      });
+    }
+  }
+
+  const convertMarkdownToNotionBlocks = (markdown: string): any[] => {
+    const blocks: any[] = [];
+    const lines = markdown.split('\n');
+    
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      
+      // Handle headings
+      if (line.startsWith('# ')) {
+        blocks.push(NotionAPI.createHeadingBlock(line.substring(2).trim(), 1));
+      } else if (line.startsWith('## ')) {
+        blocks.push(NotionAPI.createHeadingBlock(line.substring(3).trim(), 2));
+      } else if (line.startsWith('### ')) {
+        blocks.push(NotionAPI.createHeadingBlock(line.substring(4).trim(), 3));
+      } 
+      // Handle code blocks (simple detection)
+      else if (line.startsWith('```')) {
+        const language = line.substring(3).trim() || 'plain text';
+        const codeContent = [];
+        let nextLine = lines[lines.indexOf(line) + 1];
+        let codeIndex = lines.indexOf(line) + 1;
+        
+        while (nextLine && !nextLine.startsWith('```')) {
+          codeContent.push(nextLine);
+          codeIndex++;
+          nextLine = lines[codeIndex];
+        }
+        
+        if (codeContent.length > 0) {
+          blocks.push(NotionAPI.createCodeBlock(codeContent.join('\n'), language));
+        }
+      }
+      // Regular paragraphs
+      else {
+        blocks.push(NotionAPI.createMarkdownBlock(line));
+      }
+    }
+    
+    return blocks;
   }
 
     React.useEffect(() => {

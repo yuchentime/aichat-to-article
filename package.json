@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "dexie": "^3.2.4",
+    "@notionhq/client": "^4.0.2",
     "@types/react-syntax-highlighter": "^15.5.13",
+    "@vrerv/md-to-notion": "^1.1.1",
+    "dexie": "^3.2.4",
     "gpt-tokenizer": "^3.0.1",
     "html-to-md": "^0.8.8",
     "mermaid": "^11.10.0",

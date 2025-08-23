@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { ensureContextMenus, registerContextMenuClickHandler } from './contextMenus';
 import { hydrateState, isHydrated, getTaskState, getResult } from './state';
-import { submitTask } from './queue';
+import { submitGenerateTask } from './queue';
 
 // 创建右键菜单，仅在指定域名下显示
 const allowedHosts = ['chatgpt.com', 'grok.com'];
@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener((
       return false;
     }
 
-    submitTask(domain, url, messages, taskId, 'generateArticle', respond);
+    submitGenerateTask(domain, url, messages, taskId, 'generateArticle', respond);
     return true; // async response
   }
 

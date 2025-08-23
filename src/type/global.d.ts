@@ -22,4 +22,5 @@ interface Task {
   messages: string[];
   synced: boolean;
   url?: string;
+  notionUrl?: string;
 }

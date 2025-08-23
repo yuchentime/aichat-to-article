@@ -13,10 +13,13 @@ const runGenerateArticleTask = async (task: Task) => {
 
   const finalize = async (result?: string, error?: string) => {
     logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
-    taskState.running = taskState.running.filter((t) => t.id !== task.id);
-    task.status = 'finished';
-    task.messages = [];
+    
     try {
+      // 确保任务从running状态移除，即使后续操作失败
+      taskState.running = taskState.running.filter((t) => t.id !== task.id);
+      task.status = 'finished';
+      task.messages = [];
+
       if (result) {
         const summary: string[] = [];
         const originalSummary = result.slice(0, 200).trim();
@@ -38,8 +41,8 @@ const runGenerateArticleTask = async (task: Task) => {
         }
       }
       if (error) task.error = error;
-      taskState.finished.push(task);
 
+      taskState.finished.push(task);
       setBadgeText(String(taskState.running.length + taskState.pending.length));
 
       if (result) {
@@ -56,6 +59,20 @@ const runGenerateArticleTask = async (task: Task) => {
       }
 
       logger.background.info('queue progress', { task });
+    } catch (finalizeError) {
+      // finalize函数本身的错误处理
+      logger.background.error('finalize函数执行失败', { 
+        taskId: task.id, 
+        error: String(finalizeError),
+        originalError: error,
+        hasResult: !!result 
+      });
+      
+      // 发送紧急通知
+      sendNotification(
+        getTextByLang(navigator.language, 'taskFailed'),
+        getTextByLang(navigator.language, 'taskCriticalError') || '任务处理发生严重错误'
+      );
     } finally {
       processing = false;
       logger.background.info('process next in queue');
@@ -64,17 +81,62 @@ const runGenerateArticleTask = async (task: Task) => {
   };
 
   const lang = navigator.language || navigator.languages?.[0] || 'en';
+  
+  // 添加超时机制
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('任务执行超时（60秒）'));
+    }, 60000); // 30秒超时
+  });
+
   try {
     logger.background.info('调用生成函数', { domain: task.domain });
     const userInput = task.messages.join('\n');
-    const result = await generateArticle(userInput, lang);
+    
+    // 使用Promise.race添加超时控制
+    const result = await Promise.race([
+      generateArticle(userInput, lang),
+      timeoutPromise
+    ]);
+    
     logger.background.info('生成结果: ', result);
     await finalize(result);
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
     logger.background.error('任务执行错误', { taskId: task.id, error: errMsg });
-    await finalize(undefined, errMsg);
+    
+    // 确保即使finalize失败也能记录错误状态
+    try {
+      await finalize(undefined, errMsg);
+    } catch (finalizeError) {
+      logger.background.error('错误处理过程中发生异常', { 
+        taskId: task.id, 
+        originalError: errMsg,
+        finalizeError: String(finalizeError) 
+      });
+      
+      // 强制更新状态，避免任务卡在running
+      taskState.running = taskState.running.filter((t) => t.id !== task.id);
+      task.status = 'finished';
+      task.error = `处理错误时发生异常: ${errMsg}`;
+      taskState.finished.push(task);
+      
+      try {
+        await saveState();
+      } catch (saveError) {
+        logger.background.error('无法保存错误状态', { 
+          taskId: task.id, 
+          error: String(saveError) 
+        });
+      }
+      
+      setBadgeText(String(taskState.running.length + taskState.pending.length));
+      sendNotification(
+        getTextByLang(navigator.language, 'taskFailed'),
+        getTextByLang(navigator.language, 'taskCriticalError') || '任务处理发生严重错误'
+      );
+    }
   }
 };
 
@@ -115,7 +177,7 @@ const processQueue = async () => {
   }
 };
 
-export const submitTask = async (
+export const submitGenerateTask = async (
   domain: string,
   url: string,
   messages: string[],

@@ -125,6 +125,26 @@ export function withPrefix(prefix: string) {
 }
 
 /**
+ * Notion-specific storage interface
+ */
+export const notionStorage = withPrefix('notion');
+
+export interface NotionConfig {
+  apiKey: string;
+  databaseId: string;
+  isConfigured: boolean;
+}
+
+/**
+ * Notion configuration store
+ */
+export const notionConfigStore = createStore<NotionConfig>('notion:config', {
+  apiKey: '',
+  databaseId: '',
+  isConfigured: false
+});
+
+/**
  * Tiny "store" helper bound to a single key with get/set/update.
  */
 export function createStore<T = any>(key: Key, initial: T) {
