@@ -3,17 +3,40 @@ import { ensureContextMenus, registerContextMenuClickHandler } from './contextMe
 import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById } from './state';
 import { submitGenerateTask } from './queue';
 
-// 创建右键菜单，仅在指定域名下显示
 const allowedHosts = ['chatgpt.com', 'grok.com'];
 const BACKEND = 'https://www.aichat2notion.com';
 
 async function ensureAuth() {
+  // 先探活：已有 HttpOnly Cookie 就直接返回“已授权”
+  const ping = await fetch(`${BACKEND}/api/notion/me`, { credentials: 'include' });
+  console.log('auth info: ', ping)
+  if (ping.ok) {
+    const info = await ping.json(); // { authed:true, workspace_name, workspace_id }
+    console.log('auth info json: ', info)
+    return info;
+  }
+
+  // 未授权 → 拉起 OAuth
   const redirectUrl = chrome.identity.getRedirectURL('oauth2');
   const startUrl = `${BACKEND}/api/notion/oauth/start?redirect=${encodeURIComponent(redirectUrl)}`;
-  const responseUrl = await chrome.identity.launchWebAuthFlow({ url: startUrl, interactive: true });
-  if (!responseUrl) return null;
-  const ok = new URL(responseUrl).searchParams.get('ok');
-  if (ok !== '1') throw new Error('Auth failed');
+
+  const responseUrl = await chrome.identity.launchWebAuthFlow({
+    url: startUrl,
+    interactive: true
+  });
+
+  if (!responseUrl) throw Error('Notion 授权失败');
+
+  // 这是服务端回跳到扩展的最终 URL，只包含你设计的轻量标志，不含 Notion token
+  const final = new URL(responseUrl);
+  const ok = final.searchParams.get('ok');
+  if (ok !== '1') throw new Error('Notion 授权未完成');
+
+  // 授权已完成（服务端已把 Notion token 加密写进 HttpOnly Cookie）
+  // 再次调用 /me 拿到“授权页面信息”（工作区名称/ID等）
+  const me = await fetch(`${BACKEND}/api/notion/me`, { credentials: 'include' }).then(r => r.json());
+  console.log('re auth info: ', me)
+  return me; // { authed:true, workspace_name, workspace_id }
 }
 
 export async function saveToNotion({ parentId, meta, blocks }: {parentId: string, meta: any, blocks: string}) {
@@ -126,26 +149,10 @@ chrome.runtime.onMessage.addListener((
   }
 
   if (message?.type === 'ensureNotionAuth') {
-    (async () => {
-      try {
-        // const resp = await fetch(`${BACKEND}/api/notion/me`, {
-        //   method: 'GET',
-        //   credentials: 'include', // 关键：让 ntkn Cookie 附带
-        //   headers: { 'Content-Type': 'application/json' },
-        // });
-        // console.log('Notion权限验证结果: ', resp);
-        // if (resp.ok) {
-
-        // } else {
-        //   ensureAuth();
-        // }
-
-        await ensureAuth();
-      } catch (error) {
-        console.error('Failed to ensure notion: ', error)
-        respond({ ok: false, error: 'Notion权限验证失败' });
-      }
-    })();
+    ensureAuth().then(
+      me => respond({ok: true, data: me}),
+      err => respond({ ok: false, error: String(err) })
+    );
     return true;
   }
 

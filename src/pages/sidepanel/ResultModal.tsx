@@ -27,7 +27,11 @@ const ResultModal: React.FC<ResultModalProps> = ({
 
   const syncToNotion = async () => {
     try {
-      chrome.runtime.sendMessage({ type: 'ensureNotionAuth' })
+      chrome.runtime.sendMessage({ type: 'ensureNotionAuth' }).then((resp) => {
+          if (!resp?.ok) {
+            console.log('取得授权信息: ', resp)
+          }
+      })
 
       // Show success notification
       // chrome.runtime.sendMessage({

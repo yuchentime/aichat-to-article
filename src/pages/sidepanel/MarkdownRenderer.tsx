@@ -47,7 +47,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
                 </SyntaxHighlighter>
               );
             }
-            console.log('当前内容行是：', { children, className, inline, match });
+            // console.log('当前内容行是：', { children, className, inline, match });
             if (children?.toString().includes('\n')) {
               return (
                 <pre className="w-full bg-gray-100 p-2 my-2">
