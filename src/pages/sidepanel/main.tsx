@@ -19,6 +19,7 @@ function SidePanelInner() {
   // 使用自定义hook获取数据
   const { 
     tasks, 
+    updateTasks,
     pendingCount, 
     runningCount, 
     apiConfigs, 
@@ -30,7 +31,9 @@ function SidePanelInner() {
 
   const deleteTask = async (id: string) => {
     try {
-      chrome.runtime.sendMessage({type: 'deleteTaskById', id});
+      chrome.runtime.sendMessage({type: 'deleteTaskById', id}).then(() => {
+        updateTasks(tasks.filter(t => t.id !== id));
+      });
       
       logger.sidepanel.info('任务已从存储中删除', { id });
     } catch (err) {
@@ -213,7 +216,6 @@ function SidePanelInner() {
         </Suspense>
       )}
       {showResultModal && selectedTask && (
-        <Suspense fallback={null}>
           <ResultModal
             id={selectedTask.id}
             isOpen={showResultModal}
@@ -221,7 +223,6 @@ function SidePanelInner() {
             title={selectedTask.title ?? selectedTask.domain}
             domain={selectedTask.domain}
           />
-        </Suspense>
       )}
     </div>
   );

@@ -27,61 +27,15 @@ const ResultModal: React.FC<ResultModalProps> = ({
 
   const syncToNotion = async () => {
     try {
-      // Check if Notion is configured
-      const notionConfig = await notionConfigStore.get();
-      
-      if (!notionConfig.isConfigured) {
-        // Open settings modal to configure Notion
-        chrome.runtime.sendMessage({
-          type: 'openSettings'
-        });
-        return;
-      }
-
-      // Decrypt the API key
-      const apiKey = notionConfig.apiKey ? await decrypt(notionConfig.apiKey) : '';
-      
-      if (!apiKey || !notionConfig.databaseId) {
-        throw new Error('Notion configuration is incomplete');
-      }
-
-      // Initialize Notion API
-      const notion = new NotionAPI(apiKey);
-
-      // Convert markdown to Notion blocks
-      const blocks = convertMarkdownToNotionBlocks(content);
-
-      // Create page in Notion
-      const result = await notion.createPage({
-        parent: { database_id: notionConfig.databaseId },
-        properties: {
-          title: {
-            title: [
-              {
-                type: 'text',
-                text: { content: title }
-              }
-            ]
-          }
-        },
-        children: blocks
-      });
-
-      // Update task sync status
-      chrome.runtime.sendMessage({
-        type: 'updateTaskSyncStatus',
-        id,
-        synced: true,
-        notionUrl: result.url
-      });
+      chrome.runtime.sendMessage({ type: 'ensureNotionAuth' })
 
       // Show success notification
-      chrome.runtime.sendMessage({
-        type: 'showNotification',
-        title: '同步成功',
-        message: '内容已成功保存到 Notion',
-        url: result.url
-      });
+      // chrome.runtime.sendMessage({
+      //   type: 'showNotification',
+      //   title: '同步成功',
+      //   message: '内容已成功保存到 Notion',
+      //   // url: result.url
+      // });
 
     } catch (error) {
       console.error('Failed to sync to Notion:', error);
@@ -136,23 +90,23 @@ const ResultModal: React.FC<ResultModalProps> = ({
     return blocks;
   }
 
-    React.useEffect(() => {
-        if (isOpen) {
-            chrome.runtime.sendMessage({
-                type: 'getResultById',
-                id
-            }).then((response: any) => {
-                console.log('获取结果响应:', response);
-                if (response?.ok) {
-                    setContent(response.result || '');
-                } else {
-                    console.error('获取结果失败:', response?.error || '未知错误');
-                }
-            }).catch((error: any) => {
-                console.error('发送消息失败:', error);
-            });
-        }
-    }, [isOpen]);
+  React.useEffect(() => {
+      if (isOpen) {
+          chrome.runtime.sendMessage({
+              type: 'getResultById',
+              id
+          }).then((response: any) => {
+              console.log('获取结果响应:', response);
+              if (response?.ok) {
+                  setContent(response.result || '');
+              } else {
+                  console.error('获取结果失败:', response?.error || '未知错误');
+              }
+          }).catch((error: any) => {
+              console.error('发送消息失败:', error);
+          });
+      }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
