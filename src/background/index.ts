@@ -79,7 +79,9 @@ export async function saveToNotion({ parentId, title, blocks }: {parentId: strin
       blocks
     })
   });
-  if (!res.ok) throw new Error(`Save failed: ${res.status}`);
+  if (!res.ok) {
+    throw new Error(`Save failed: ${res.status}`)
+  };
   return res.json();
 }
 
@@ -182,7 +184,11 @@ chrome.runtime.onMessage.addListener((
   }
 
   if (message?.type === 'saveToNotion') {
-    saveToNotion(message.payload);
+    saveToNotion(message.payload).then(() => {
+      respond({ok: true});
+    }).catch(err => {
+      respond({ok: false, message: '保存至Notion失败'})
+    });
     return true;
   }
 

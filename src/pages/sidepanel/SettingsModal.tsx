@@ -31,7 +31,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         databaseId: '',
         isConfigured: false
     });
-    const [activeTab, setActiveTab] = useState<'api' | 'notion'>('api');
+    const [activeTab, setActiveTab] = useState<'api' | 'language'>('api');
     const { t, lang, setLanguage } = useI18n();
 
     useEffect(() => {
@@ -159,13 +159,13 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               </button>
               <button
                 className={`px-4 py-2 font-medium text-sm ${
-                  activeTab === 'notion'
+                  activeTab === 'language'
                     ? 'text-primary-600 border-b-2 border-primary-600'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
-                onClick={() => setActiveTab('notion')}
+                onClick={() => setActiveTab('language')}
               >
-                Notion 设置
+                语言设置
               </button>
             </div>
           </div>
@@ -173,32 +173,6 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto">
             {activeTab === 'api' ? (
               <>
-                {/* Language Settings */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                    </svg>
-                    {t('language_label')}
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {t('select_language')}
-                      </label>
-                      <select
-                        className="input w-full"
-                        value={lang}
-                        onChange={(e) => switchLanguage(e.target.value as any)}
-                      >
-                        <option value="en">{t('language_en')}</option>
-                        <option value="zh_CN">{t('language_zh_CN')}</option>
-                        <option value="zh_TW">{t('language_zh_TW')}</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
       
                 {/* API Settings */}
                 <div>
@@ -271,61 +245,35 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
               </>
             ) : (
-              /* Notion Settings */
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                  </svg>
-                  Notion 配置
-                </h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Notion API 密钥
-                    </label>
-                    <input
-                      className="input w-full"
-                      type="password"
-                      placeholder="输入您的 Notion API 密钥"
-                      value={notionConfig.apiKey}
-                      onChange={(e) => setNotionConfig({ ...notionConfig, apiKey: e.target.value })}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      在 Notion 开发者设置中创建集成并获取 API 密钥
-                    </p>
-                  </div>
+              <>
+              
+                {/* Language Settings */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                    </svg>
+                    {t('language_label')}
+                  </h3>
                   
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      数据库 ID
-                    </label>
-                    <input
-                      className="input w-full"
-                      placeholder="输入您的 Notion 数据库 ID"
-                      value={notionConfig.databaseId}
-                      onChange={(e) => setNotionConfig({ ...notionConfig, databaseId: e.target.value })}
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      分享数据库到您的集成并复制数据库 ID
-                    </p>
-                  </div>
-                  
-                  {notionConfig.isConfigured && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
-                      <div className="flex items-center">
-                        <svg className="w-4 h-4 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span className="text-sm text-green-800 dark:text-green-200">
-                          Notion 配置已完成
-                        </span>
-                      </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {t('select_language')}
+                      </label>
+                      <select
+                        className="input w-full"
+                        value={lang}
+                        onChange={(e) => switchLanguage(e.target.value as any)}
+                      >
+                        <option value="en">{t('language_en')}</option>
+                        <option value="zh_CN">{t('language_zh_CN')}</option>
+                        <option value="zh_TW">{t('language_zh_TW')}</option>
+                      </select>
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
   

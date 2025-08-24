@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@notionhq/client": "^4.0.2",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vrerv/md-to-notion": "^1.1.1",
     "dexie": "^3.2.4",

@@ -1,10 +1,10 @@
 import React, { lazy } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
 import { useI18n } from '../../lib/i18n';
-import { NotionAPI } from '../../api/notionApi';
 import chatgptLogo from '@/assets/img/chatgpt.png';
 import grokLogo from '@/assets/img/grok.png';
-import { showToast } from '@/lib/toast/index'
+import { showToast } from '@/lib/toast/index';
+import { convertMarkdownToNotionBlocks } from '@/lib/notionUtil';
 
 const NotionLocationPickerWithLazy = lazy(() => import('./NotionLocationPicker'));
 const LoadingWithLazy = lazy(() => import('./Loading'));
@@ -44,13 +44,13 @@ const ResultModal: React.FC<ResultModalProps> = ({
       const resp = await chrome.runtime.sendMessage({ type: 'ensureNotionAuth' });
       if (!resp?.authed) {
         console.log('查询notion列表')
-        const searchRes = await chrome.runtime.sendMessage({ type: 'searchNotionTarget', payload: { type: 'database' } });
+        const searchRes = await chrome.runtime.sendMessage({ type: 'searchNotionTarget', payload: { type: 'page' } });
         console.log('searchRes: ', searchRes)
         if (!searchRes?.ok || searchRes.error) throw new Error(searchRes?.error || 'search failed');
 
         const items: NotionPageItem[] = searchRes.data?.items || [];
         
-        setPageItems(items);
+        setPageItems(items.map(item => ({...item, id: item.id})));
         setLoaing(false);
         setShowFloatingWindow(true);
       } else {
@@ -82,67 +82,21 @@ const ResultModal: React.FC<ResultModalProps> = ({
       parentId: selectedItemId,
       blocks,
       title
-    }}).then(() => {
-      setShowFloatingWindow(false);
-      showToast('info', "同步成功")
+    }})
+    .then((res) => {
+      if (res.ok) {
+        setShowFloatingWindow(false);
+        showToast('info', "同步成功")
+      } else {
+        showToast('error', "同步失败")
+      }
     }).catch(e => {
       console.error('Failed to save chat to Notion:', e)
-      showToast('info', "同步失败")
+      showToast('error', "同步失败")
     })
   };
 
-  const convertMarkdownToNotionBlocks = (markdown: string) => {
-    const blocks: any[] = [];
-    let title: string = '';
-    const lines = markdown.split('\n');
-    
-    for (const line of lines) {
-      if (!line.trim()) continue;
-      
-      // Handle headings
-      if (line.startsWith('# ')) {
-        if (!title) {
-          title = line.substring(2).trim();
-        } else {
-          blocks.push(NotionAPI.createHeadingBlock(line.substring(2).trim(), 1));
-        }
-      } else if (line.startsWith('## ')) {
-        if (!title) {
-          title = line.substring(3).trim();
-        } else {
-          blocks.push(NotionAPI.createHeadingBlock(line.substring(3).trim(), 2));
-        }
-      } else if (line.startsWith('### ')) {
-        blocks.push(NotionAPI.createHeadingBlock(line.substring(4).trim(), 3));
-      } else if (line.startsWith('#### ')) {
-        blocks.push(NotionAPI.createHeadingBlock(line.substring(5).trim(), 4));
-      } else if (line.startsWith('##### ')) {
-        blocks.push(NotionAPI.createHeadingBlock(line.substring(6).trim(), 5));
-      } 
-      // Handle code blocks (simple detection)
-      else if (line.startsWith('```')) {
-        const language = line.substring(3).trim() || 'plain text';
-        const codeContent = [];
-        let nextLine = lines[lines.indexOf(line) + 1];
-        let codeIndex = lines.indexOf(line) + 1;
-        
-        while (nextLine && !nextLine.startsWith('```')) {
-          codeContent.push(nextLine);
-          codeIndex++;
-          nextLine = lines[codeIndex];
-        }
-        
-        if (codeContent.length > 0) {
-          blocks.push(NotionAPI.createCodeBlock(codeContent.join('\n'), language));
-        }
-      }
-      // Regular paragraphs
-      else {
-        blocks.push(NotionAPI.createMarkdownBlock(line));
-      }
-    }
-    return {title, blocks};
-  }
+
 
   React.useEffect(() => {
       if (isOpen) {
