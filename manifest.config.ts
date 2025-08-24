@@ -36,5 +36,5 @@ export default defineManifest({
     }
   ],
   permissions: ['sidePanel', 'storage', 'contextMenus', 'notifications', 'identity'],
-  host_permissions: ['https://chatgpt.com/*', 'https://grok.com/*']
+  host_permissions: ['https://chatgpt.com/*', 'https://grok.com/*', 'https://www.aichat2notion.com/*']
 } as any);
