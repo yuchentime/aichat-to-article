@@ -1,4 +1,5 @@
 import {CollectorFactory} from '@/lib/collector/CollectorFactory';
+import { getTextByLang } from '@/lib/langConst';
 import { logger } from '@/lib/logger';
 import { showToast } from '@/lib/toast';
 
@@ -13,7 +14,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse: (response?
     const messages: string[] = collectorFactory.getCollectorInstance(window.location.hostname).getAllMessages();
     logger.content.info('Collected messages', messages);
     if (messages.length === 0) {
-      showToast('warn', 'No messages found to save');
+      showToast('warn', getTextByLang(navigator.language, 'noMessages'));
       sendResponse({ ok: false, error: 'No messages found' });
       return true; // Keep message channel open for async response
     }
@@ -29,7 +30,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse: (response?
     }).then((result) => {
       logger.content.info('Message sent to background script', result);
       if (result?.ok) {
-        showToast('info', 'Task added to queue');
+        showToast('info', getTextByLang(navigator.language, 'taskAdded'));
       } else {
         showToast('error', (result?.error || 'Unknown error'));
       }

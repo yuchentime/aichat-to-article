@@ -15,7 +15,8 @@ export const getTextByLang = (lang: string, key: string): string => {
             taskTimeout: 'Task Timeout',
             taskAlreadyExists: 'Task already exists',
             noApi: 'No API configuration available',
-            saveFailed: 'Failed to save to Notion'
+            saveFailed: 'Failed to save to Notion',
+            noMessages: 'No messages found to save'
         },
         'zh-CN': {
             taskAdded: '任务已加入队列。',
@@ -31,7 +32,8 @@ export const getTextByLang = (lang: string, key: string): string => {
             taskTimeout: '任务超时',
             taskAlreadyExists: '任务已经存在',
             noApi: '没有配置大模型API',
-            saveFailed: '保存至 Notion 失败'
+            saveFailed: '保存至 Notion 失败',
+            noMessages: '没有找到需要保存的消息'
         },
         'zh-TW': {
             taskAdded: '任務已加入隊列。',
@@ -47,7 +49,8 @@ export const getTextByLang = (lang: string, key: string): string => {
             taskTimeout: '任務超時',
             taskAlreadyExists: '任務已經存在',
             noApi: '沒有配置大模型API',
-            saveFailed: '儲存至 Notion 失敗'
+            saveFailed: '儲存至 Notion 失敗',
+            noMessages: '沒有找到需要儲存的訊息'
         },
     };
     
