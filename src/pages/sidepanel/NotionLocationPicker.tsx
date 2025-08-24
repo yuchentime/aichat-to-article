@@ -1,4 +1,5 @@
 import React from 'react';
+import { useI18n } from '../../lib/i18n';
 
 type NotionPageItem = {
   id: string,
@@ -22,6 +23,7 @@ const NotionLocationPicker: React.FC<NotionLocationPickerProps> = ({
   onConfirm,
 }) => {
   const [selectedItem, setSelectedItem] = React.useState<string | null>(null);
+  const { t } = useI18n();
 
   const handleConfirm = () => {
     onConfirm(selectedItem);
@@ -32,12 +34,12 @@ const NotionLocationPicker: React.FC<NotionLocationPickerProps> = ({
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-h-96 overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-h-100 overflow-y-auto">
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-          保存至 Notion 数据库
+          {t('select_location')}
         </h3>
         
-        <div className="space-y-3 mb-4">
+        <div className="space-y-3 mb-4 h-64 overflow-y-auto">
           {pageItems.map((item) => (
             <div key={item.id} className="flex items-center p-3 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700">
               <input
@@ -68,14 +70,14 @@ const NotionLocationPicker: React.FC<NotionLocationPickerProps> = ({
             onClick={onClose}
             className="btn btn-secondary px-4"
           >
-            取消
+            {t('cancel')}
           </button>
           <button
             onClick={handleConfirm}
             className="btn btn-primary px-4"
             disabled={!selectedItem}
           >
-            确认
+            {t('confirm')}
           </button>
         </div>
       </div>

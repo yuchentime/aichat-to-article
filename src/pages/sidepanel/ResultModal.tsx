@@ -86,13 +86,13 @@ const ResultModal: React.FC<ResultModalProps> = ({
     .then((res) => {
       if (res.ok) {
         setShowFloatingWindow(false);
-        showToast('info', "同步成功")
+        showToast('info', t('save_success'))
       } else {
-        showToast('error', "同步失败")
+        showToast('error', t('save_failed'))
       }
     }).catch(e => {
       console.error('Failed to save chat to Notion:', e)
-      showToast('error', "同步失败")
+      showToast('error', t('save_failed'))
     })
   };
 
@@ -166,7 +166,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
             onClick={onClose}
             className="btn btn-secondary px-6"
           >
-            关闭
+            {t('close')}
           </button>
           <button
             onClick={syncToNotion}

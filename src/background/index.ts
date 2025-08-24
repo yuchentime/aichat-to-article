@@ -2,6 +2,7 @@ import { logger } from '@/lib/logger';
 import { ensureContextMenus, registerContextMenuClickHandler } from './contextMenus';
 import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById } from './state';
 import { submitGenerateTask } from './queue';
+import { getTextByLang } from '@/lib/langConst';
 
 const allowedHosts = ['chatgpt.com', 'grok.com'];
 const BACKEND = 'https://www.aichat2notion.com';
@@ -64,6 +65,19 @@ async function searchTargets({ type = 'database', query = '' } = {}) {
   const res = await fetch(url, { credentials: 'include' });
   if (!res.ok) throw new Error(`Search failed ${res.status}`);
   return res.json(); // { items, has_more, next_cursor }
+}
+
+async function clearNotionCookie() {
+  const url = new URL(`${BACKEND}/api/notion/logout`);
+  const res = await fetch(url, { method: 'POST', credentials: 'include' });
+  if (!res.ok) throw new Error(`Search failed ${res.status}`);
+  return res.json(); // { items, has_more, next_cursor }
+}
+
+async function checkIfHasNotionCookie() {
+  const ping = await fetch(`${BACKEND}/api/notion/me`, { credentials: 'include' });
+  console.log('notion cookie ping: ', ping)
+  return ping.ok;
 }
 
 export async function saveToNotion({ parentId, title, blocks }: {parentId: string, title: string, blocks: string}) {
@@ -187,7 +201,7 @@ chrome.runtime.onMessage.addListener((
     saveToNotion(message.payload).then(() => {
       respond({ok: true});
     }).catch(err => {
-      respond({ok: false, message: '保存至Notion失败'})
+      respond({ok: false, message: getTextByLang(navigator.language, 'saveFailed')})
     });
     return true;
   }
@@ -208,6 +222,22 @@ chrome.runtime.onMessage.addListener((
   if (message.type === 'searchNotionTarget') {
     searchTargets(message.payload).then(
       data => respond({ ok: true, data}),
+      err => respond({ ok: false, error: String(err) })
+    );
+    return true;
+  }
+
+  if (message?.type === 'clearNotionCookie') {
+    clearNotionCookie().then(
+      data => respond({ ok: true, data}),
+      err => respond({ ok: false, error: String(err) })
+    );
+    return true;
+  }
+
+  if (message?.type === 'checkIfHasNotionCookie') {
+    checkIfHasNotionCookie().then(
+      data => respond({ ok: data}),
       err => respond({ ok: false, error: String(err) })
     );
     return true;

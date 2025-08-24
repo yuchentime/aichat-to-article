@@ -3,6 +3,9 @@
   "ext_desc": { "message": "Send AI chat results to Notion and manage tasks" },
 
   "logo_alt": { "message": "Logo" },
+  "confirm": {"message":"Confirm"},
+  "cancel": {"message":"Cancel"},
+  "close": {"manage": "Close"},
 
   "select_language": { "message": "Select Language" },
 
@@ -45,15 +48,30 @@
   "provider_custom": { "message": "Custom" },
 
   "sync_notion": { "message": "Sync to Notion" },
+  "select_location": {"message": "Select save location"},
 
   "copy_success": { "message": "Copied to clipboard" },
   "copy_failed": { "message": "Copy failed, please copy manually" },
   "send_failed": { "message": "Send message failed" },
 
+  "clear_notion_cookie": {"message": "Clear Authorization"},
+  "cleared_notion_cookie": {"message": "Notion authorization has been cleared"},
+
   "language_label": { "message": "Language" },
   "language_auto": { "message": "Browser default" },
   "language_en": { "message": "English" },
   "language_zh_CN": { "message": "Chinese (Simplified)" },
-  "language_zh_TW": { "message": "Chinese (Traditional)" }
+  "language_zh_TW": { "message": "Chinese (Traditional)" },
+  
+  "ai_settings": {"message": "AI Settings"},
+  "language_settings": {"message": "Language Settings"},
+  "notion_settings": {"message": "Notion Settings"},
+
+  "save_success": {"message": "Save Successful"},
+  "save_failed": {"message": "Save Failed"},
+
+  "no_messages_found_to_save": {"message": "No messages found to save"},
+  "task_added_to_queue": {"message": "Task added to queue"},
+  "unknown_error": {"message": "Unknown error"}
 }
 

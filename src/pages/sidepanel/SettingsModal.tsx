@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { encrypt, decrypt } from '../../lib/crypto';
-import { useI18n, normalizeLang } from '../../lib/i18n';
+import { useI18n } from '../../lib/i18n';
 import { notionConfigStore } from '../../lib/storage';
+import { showToast } from '@/lib/toast';
 
 interface ApiConfig {
     provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -31,8 +32,9 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         databaseId: '',
         isConfigured: false
     });
-    const [activeTab, setActiveTab] = useState<'api' | 'language'>('api');
+    const [activeTab, setActiveTab] = useState<'api' | 'language' | 'notion'>('api');
     const { t, lang, setLanguage } = useI18n();
+    const [isNotionAuthed, setIsNotionAuthed] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -56,6 +58,15 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             const notionConfig = await notionConfigStore.get();
             setNotionConfig(notionConfig);
         })();
+
+        chrome.runtime.sendMessage({type: 'checkIfHasNotionCookie'}).then(res => {
+          console.log('checkIfHasNotionCookie response: ',res)
+          if (res?.ok) {
+            setIsNotionAuthed(true);
+          }
+        }).catch(err => {
+          console.error(err)
+        })
     }, []);
 
     const switchLanguage = (newLang: 'en' | 'zh_CN' | 'zh_TW') => {
@@ -132,6 +143,17 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         onClose();
     };
 
+    const logoutNotion = () => {
+      chrome.runtime.sendMessage({type: "clearNotionCookie"}).then(res => {
+        if (res?.ok) {
+          setIsNotionAuthed(false);
+          showToast("info", t('cleared_notion_cookie'))
+        } else {
+          console.warn('清除失败：', res.error)
+        }
+      })
+    }
+
     return (
       <div className="fixed inset-0 modal-overlay flex items-center justify-center p-4 z-50">
         <div className="modal-content w-full max-w-md">
@@ -155,7 +177,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 }`}
                 onClick={() => setActiveTab('api')}
               >
-                AI 设置
+                {t('ai_settings')}
               </button>
               <button
                 className={`px-4 py-2 font-medium text-sm ${
@@ -165,7 +187,17 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 }`}
                 onClick={() => setActiveTab('language')}
               >
-                语言设置
+                {t('language_settings')}
+              </button>
+              <button
+                className={`px-4 py-2 font-medium text-sm ${
+                  activeTab === 'notion'
+                    ? 'text-primary-600 border-b-2 border-primary-600'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+                onClick={() => setActiveTab('notion')}
+              >
+                {t('notion_settings')}
               </button>
             </div>
           </div>
@@ -176,13 +208,6 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
       
                 {/* API Settings */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    {t('model_settings')}
-                  </h3>
-                  
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -209,7 +234,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       </label>
                       <input
                         className="input w-full"
-                        placeholder="例如: gpt-4, gemini-pro"
+                        placeholder="gpt-4, gemini-pro"
                         value={config.model}
                         onChange={(e) => setConfig({ ...config, model: e.target.value })}
                       />
@@ -244,9 +269,8 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : activeTab === 'language' ? (
               <>
-              
                 {/* Language Settings */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
@@ -273,6 +297,22 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </div>
                   </div>
                 </div>
+              </>
+            ) : (
+              <>
+              {/* Notion Settings */}
+                {isNotionAuthed ? (
+                  <div className="space-y-4">
+                    <button
+                      onClick={logoutNotion}
+                      className="btn-info p-2 text-sm bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500"
+                    >
+                      {t('clear_notion_cookie')}
+                    </button>
+                  </div>
+                ) : (
+                  <span className='text-gray-400'>{t('cleared_notion_cookie')}</span>
+                )}
               </>
             )}
           </div>

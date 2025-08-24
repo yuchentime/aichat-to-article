@@ -3,6 +3,9 @@
   "ext_desc": { "message": "傳送 AI 對話結果到 Notion，並管理任務" },
 
   "logo_alt": { "message": "標誌" },
+  "confirm": {"message":"確認"},
+  "cancel": {"message":"取消"},
+  "close": {"manage": "關閉"},
 
   "select_language": { "message": "選擇語言" },
   "settings_title": { "message": "設定" },
@@ -12,6 +15,10 @@
 
   "not_sync": { "message": "尚未同步" },
   "synced": { "message": "已同步" },
+  "select_location": {"message": "選擇儲存位置"},
+
+  "clear_notion_cookie": {"message": "清除授權資訊"},
+  "cleared_notion_cookie": {"message": "已清除 Notion 授權資訊"},
 
   "popup_title": { "message": "Vite React TS" },
   "popup_subtitle": { "message": "簡單的 Chrome 擴展彈窗（支援 HMR)" },
@@ -54,5 +61,16 @@
   "language_auto": { "message": "跟隨瀏覽器" },
   "language_en": { "message": "英文" },
   "language_zh_CN": { "message": "簡體中文" },
-  "language_zh_TW": { "message": "繁體中文" }
+  "language_zh_TW": { "message": "繁體中文" },
+  
+  "ai_settings": {"message": "AI 設定"},
+  "language_settings": {"message": "Language 設定"},
+  "notion_settings": {"message": "Notion 設定"},
+
+  "save_success": {"message": "儲存成功"},
+  "save_failed": {"message": "儲存失敗"},
+
+  "no_messages_found_to_save": {"message": "未找到要儲存的訊息"},
+  "task_added_to_queue": {"message": "任務已添加到佇列"},
+  "unknown_error": {"message": "未知錯誤"}
 }

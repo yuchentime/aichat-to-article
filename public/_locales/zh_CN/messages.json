@@ -3,6 +3,9 @@
   "ext_desc": { "message": "发送 AI 对话结果到 Notion，并管理任务" },
 
   "logo_alt": { "message": "标志" },
+  "confirm": {"message":"确认"},
+  "cancel": {"message":"取消"},
+  "close": {"manage": "关闭"},
 
   "select_language": { "message": "选择语言" },
   "settings_title": { "message": "设置" },
@@ -45,15 +48,30 @@
   "provider_custom": { "message": "自定义" },
 
   "sync_notion": { "message": "同步 Notion" },
+  "select_location": {"message": "选择保存位置"},
 
   "copy_success": { "message": "结果已复制到剪贴板" },
   "copy_failed": { "message": "复制失败，请手动复制" },
   "send_failed": { "message": "发送消息失败" },
 
+  "clear_notion_cookie": {"message": "清除授权信息"},
+  "cleared_notion_cookie": {"message": "已清除 Notion 授权信息"},
+
   "language_label": { "message": "语言" },
   "language_auto": { "message": "跟随浏览器" },
   "language_en": { "message": "英文" },
   "language_zh_CN": { "message": "简体中文" },
-  "language_zh_TW": { "message": "繁体中文" }
+  "language_zh_TW": { "message": "繁体中文" },
+  
+  "ai_settings": {"message": "AI 设置"},
+  "language_settings": {"message": "语言设置"},
+  "notion_settings": {"message": "Notion 设置"},
+
+  "save_success": {"message": "保存成功"},
+  "save_failed": {"message": "保存失败"},
+
+  "no_messages_found_to_save": {"message": "未找到要保存的消息"},
+  "task_added_to_queue": {"message": "任务已添加到队列"},
+  "unknown_error": {"message": "未知错误"}
 }
 
