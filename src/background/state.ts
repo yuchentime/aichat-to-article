@@ -48,6 +48,17 @@ export const hydrateState = async (): Promise<void> => {
   }
 };
 
+export const updateSyncedState = async (id: string): Promise<void> => {
+  if (!hydrated) {
+    await hydrateState();
+  }
+  taskState.finished = taskState.finished.map(task => id === task.id ? {...task, synced: true}: task);
+  await saveState();
+  try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
+  logger.background.info('state updated');
+};
+
+
 export const saveState = async (): Promise<void> => {
   if (!hydrated) {
     await hydrateState();
@@ -91,5 +102,6 @@ export const getResult = async (id: string): Promise<string | null> => {
 export const deleteTaskById = async (id: string) => {
   logger.background.info('删除任务', { id });
   await deleteTask(id)
+  try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
 }
 

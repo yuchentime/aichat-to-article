@@ -140,7 +140,7 @@ const runGenerateArticleTask = async (task: Task) => {
   }
 };
 
-const processQueue = async () => {
+export const processQueue = async () => {
   logger.background.info('process queue', { queueLength: taskQueue.length, processing });
   if (processing) {
     logger.background.info('already processing, skip');
@@ -169,12 +169,7 @@ const processQueue = async () => {
     logger.background.error('保存任务状态失败?', { taskId: task.id, error: String(e) });
   }
 
-  if (task.action === 'generateArticle') {
-    await runGenerateArticleTask(task);
-  } else {
-    // Reserve for future actions
-    await runGenerateArticleTask(task);
-  }
+  await runGenerateArticleTask(task);
 };
 
 export const submitGenerateTask = async (

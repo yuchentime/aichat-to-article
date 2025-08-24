@@ -31,9 +31,7 @@ function SidePanelInner() {
 
   const deleteTask = async (id: string) => {
     try {
-      chrome.runtime.sendMessage({type: 'deleteTaskById', id}).then(() => {
-        updateTasks(tasks.filter(t => t.id !== id));
-      });
+      chrome.runtime.sendMessage({type: 'deleteTaskById', id});
       
       logger.sidepanel.info('任务已从存储中删除', { id });
     } catch (err) {

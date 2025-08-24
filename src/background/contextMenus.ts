@@ -6,7 +6,7 @@ export const ensureContextMenus = (allowedHosts: string[]) => {
     chrome.contextMenus.removeAll(() => {
       void chrome.contextMenus.create({
         id: 'save_to_notion',
-        title: 'Generate Post',
+        title: 'Generate Article',
         contexts: ['all'],
         documentUrlPatterns,
       });
@@ -15,7 +15,7 @@ export const ensureContextMenus = (allowedHosts: string[]) => {
     try {
       chrome.contextMenus.create({
         id: 'save_to_notion',
-        title: 'Generate Post',
+        title: 'Generate Article',
         contexts: ['all'],
         documentUrlPatterns,
       });

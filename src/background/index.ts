@@ -1,8 +1,9 @@
 import { logger } from '@/lib/logger';
 import { ensureContextMenus, registerContextMenuClickHandler } from './contextMenus';
-import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById } from './state';
-import { submitGenerateTask } from './queue';
+import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById, updateSyncedState, taskState } from './state';
+import { submitGenerateTask, processQueue } from './queue';
 import { getTextByLang } from '@/lib/langConst';
+import { setBadgeText } from './badge';
 
 const allowedHosts = ['chatgpt.com', 'grok.com'];
 const BACKEND = 'https://www.aichat2notion.com';
@@ -80,7 +81,7 @@ async function checkIfHasNotionCookie() {
   return ping.ok;
 }
 
-export async function saveToNotion({ parentId, title, blocks }: {parentId: string, title: string, blocks: string}) {
+export async function saveToNotion({ parentId, title, blocks, id }: {parentId: string, title: string, blocks: string, id: string}) {
   // 确保已经授权（Cookie 已写入）
   // 你可以在失败时自动触发 ensureAuth()
   const res = await fetch(`${BACKEND}/api/notion/create-article`, {
@@ -96,6 +97,9 @@ export async function saveToNotion({ parentId, title, blocks }: {parentId: strin
   if (!res.ok) {
     throw new Error(`Save failed: ${res.status}`)
   };
+  // 更新任务的同步状态
+  updateSyncedState(id);
+
   return res.json();
 }
 
@@ -209,7 +213,9 @@ chrome.runtime.onMessage.addListener((
   if (message?.type === 'deleteTaskById') {
     (async () => {
       try {
-        deleteTaskById(message.id);
+        await deleteTaskById(message.id);
+        setBadgeText(String(taskState.pending.length + taskState.running.length))
+        processQueue();
         respond({ ok: true});
       } catch (e) {
         logger.background.error('获取任务状态失败?', { error: String(e) });

@@ -305,7 +305,7 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <div className="space-y-4">
                     <button
                       onClick={logoutNotion}
-                      className="btn-info p-2 text-sm bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500"
+                      className="btn-info p-2 text-sm rounded bg-gray-500 text-white hover:bg-gray-600 dark:bg-gray-600 dark:hover:bg-gray-500"
                     >
                       {t('clear_notion_cookie')}
                     </button>

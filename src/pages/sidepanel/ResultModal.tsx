@@ -79,6 +79,7 @@ const ResultModal: React.FC<ResultModalProps> = ({
     console.log('Selected item:', selectedItemId);
     const {title, blocks} = convertMarkdownToNotionBlocks(content);
     chrome.runtime.sendMessage({type: 'saveToNotion', payload: {
+      id,
       parentId: selectedItemId,
       blocks,
       title

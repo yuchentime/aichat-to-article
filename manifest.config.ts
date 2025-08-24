@@ -31,10 +31,10 @@ export default defineManifest({
   },
   content_scripts: [
     {
-      matches: ['https://chatgpt.com/*', 'https://grok.com/*', 'https://gemini.google.com/*', 'http://localhost:5174/*', 'http://localhost:5173/*'],
+      matches: ['https://chatgpt.com/*', 'https://grok.com/*'],
       js: ['src/content/index.tsx']
     }
   ],
   permissions: ['sidePanel', 'storage', 'contextMenus', 'notifications', 'identity'],
-  host_permissions: ['https://chatgpt.com/*', 'https://grok.com/*', 'https://gemini.google.com/*', 'http://localhost:5174/*', 'http://localhost:5173/*', 'https://aichat2notion.com/*', 'https://www.aichat2notion.com/*']
+  host_permissions: ['https://chatgpt.com/*', 'https://grok.com/*']
 } as any);

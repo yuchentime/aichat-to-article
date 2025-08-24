@@ -57,7 +57,7 @@ const request = async (messages: any[]): Promise<string> => {
             break;
         case 'custom': {
             const base = (config.baseUrl || '').trim();
-            apiUrl = base;
+            apiUrl = ensureCompletionsEndpoint(base);
             body = JSON.stringify({ model: config.model, messages });
             headers = { Authorization: `Bearer ${config.apiKey}` };
             break;
@@ -118,3 +118,23 @@ const getSystemPrompt = (lang: string): string => {
     }
 }
 
+function ensureCompletionsEndpoint(input: string): string {
+  const raw = input.trim();
+  const withScheme = /^(https?:)?\/\//i.test(raw) ? raw : `https://${raw}`;
+
+  // 已经是 /v1/chat/completions（允许末尾斜杠或带查询/片段）
+  const done = withScheme.match(
+    /^(https?:\/\/[^\/?#]+)\/v1\/chat\/completions(?:\/)?(?:[?#].*)?$/i
+  );
+  if (done) {
+    return `${done[1]}/v1/chat/completions`;
+  }
+
+  // 抽取协议+主机（含端口），忽略之后的任何路径/查询/片段
+  const base = withScheme.match(/^(https?:\/\/[^\/?#]+)(?:\/.*)?$/i);
+  if (!base) {
+    throw new Error("无法解析为URL/域名");
+  }
+
+  return `${base[1]}/v1/chat/completions`;
+}

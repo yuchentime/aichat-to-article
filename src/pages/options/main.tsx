@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../styles/tailwind.css';
-import logo from '../../assets/img/logo.svg';
 import { get, set, watch } from '../../lib/storage';
 
 function OptionsApp() {
@@ -38,13 +37,6 @@ function OptionsApp() {
 
   return (
     <div className="max-w-md p-6 space-y-4">
-      <div className="flex items-center gap-3">
-        <img src={logo} alt="Logo" className="w-8 h-8" />
-        <h1 className="text-2xl font-bold">Extension Options</h1>
-      </div>
-      <p className="text-sm text-gray-600 dark:text-gray-300">
-        Configure your preferences here. This page supports HMR.
-      </p>
       <div className="space-y-2">
         <label className="block text-sm">
           <span className="mr-2">Sample toggle</span>
