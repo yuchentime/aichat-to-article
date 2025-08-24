@@ -5,7 +5,7 @@
   "logo_alt": { "message": "Logo" },
   "confirm": {"message":"Confirm"},
   "cancel": {"message":"Cancel"},
-  "close": {"manage": "Close"},
+  "close": {"message": "Close"},
 
   "select_language": { "message": "Select Language" },
 

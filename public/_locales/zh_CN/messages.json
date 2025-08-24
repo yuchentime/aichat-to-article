@@ -5,7 +5,7 @@
   "logo_alt": { "message": "标志" },
   "confirm": {"message":"确认"},
   "cancel": {"message":"取消"},
-  "close": {"manage": "关闭"},
+  "close": {"message": "关闭"},
 
   "select_language": { "message": "选择语言" },
   "settings_title": { "message": "设置" },
