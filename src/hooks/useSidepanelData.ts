@@ -11,7 +11,6 @@ export interface ApiConfig {
 
 export interface SidepanelData {
   tasks: Task[];
-  updateTasks: (newTasks: Task[]) => void;
   pendingCount: number;
   runningCount: number;
   apiConfigs: ApiConfig[];
@@ -28,10 +27,6 @@ export const useSidepanelData = (): SidepanelData => {
   const [apiConfigs, setApiConfigs] = useState<ApiConfig[]>([]);
   const [currentProvider, setCurrentProvider] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  const updateTasks = (newTasks: Task[]) => {
-    setTasks(newTasks);
-  }
 
   const loadData = useCallback(async () => {
     logger.sidepanel.info('开始加载任务列表');
@@ -68,7 +63,7 @@ export const useSidepanelData = (): SidepanelData => {
     const pendingTasks = stored.pending || [];
     const runningTasks = stored.running || [];
     
-    setTasks(finishedTasks.length === 0 ? [] : [...runningTasks, ...finishedTasks]);
+    setTasks(runningTasks.length === 0 && finishedTasks.length === 0 ? [] : [...runningTasks, ...finishedTasks]);
     setPendingCount(pendingTasks.length);
     setRunningCount(runningTasks.length);
     
@@ -159,7 +154,6 @@ export const useSidepanelData = (): SidepanelData => {
 
   return {
     tasks,
-    updateTasks,
     pendingCount,
     runningCount,
     apiConfigs,

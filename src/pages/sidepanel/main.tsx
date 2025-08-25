@@ -19,7 +19,6 @@ function SidePanelInner() {
   // 使用自定义hook获取数据
   const { 
     tasks, 
-    updateTasks,
     pendingCount, 
     runningCount, 
     apiConfigs, 

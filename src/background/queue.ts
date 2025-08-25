@@ -140,6 +140,13 @@ const runGenerateArticleTask = async (task: Task) => {
   }
 };
 
+export const loadingTaskQueue = async () => {
+  logger.background.info('loading tasks in storage to task queue.', {taskState})
+  taskQueue.push(...taskState.running);
+  processQueue();
+  try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
+}
+
 export const processQueue = async () => {
   logger.background.info('process queue', { queueLength: taskQueue.length, processing });
   if (processing) {
