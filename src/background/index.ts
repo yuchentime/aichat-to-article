@@ -121,6 +121,8 @@ chrome.runtime.onMessage.addListener((
     (async () => {
       try {
         await deleteTaskById(message.id);
+        taskState.running = taskState.running.filter(task => task.id !== message.id);
+        taskState.finished = taskState.finished.filter(task => task.id !== message.id);
         setBadgeText(String(taskState.pending.length + taskState.running.length))
         processQueue();
         respond({ ok: true});

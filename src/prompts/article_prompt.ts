@@ -27,6 +27,7 @@ export const ARTICLE_SYSTEM_PROMPT = `
 - 保留必要的引用，例如：代码块、第三方引用链接、Mermaid流程图等等，这些引用能帮助用户更为直观地理解问题和厘清思路
 - 剔除人称代词，以第三人称视角客观阐述
 - 仅输出最终生成的文章内容，避免输出任何多余的说明性文字
+- 生成的文章内容仅限聊天对话记录，
 `
 
 export const ARTICLE_SYSTEM_PROMPT_EN = `
