@@ -3,6 +3,7 @@ import { encrypt, decrypt } from '../../lib/crypto';
 import { useI18n } from '../../lib/i18n';
 import { notionConfigStore } from '../../lib/storage';
 import { showToast } from '@/lib/toast';
+import ModeSelector from './ModeSelector';
 
 interface ApiConfig {
     provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
@@ -232,12 +233,22 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         {t('model_label')}
                       </label>
-                      <input
-                        className="input w-full"
-                        placeholder="gpt-4, gemini-pro"
-                        value={config.model}
-                        onChange={(e) => setConfig({ ...config, model: e.target.value })}
-                      />
+                      {config.provider === 'custom' ? (
+                        <input
+                          className="input w-full"
+                          placeholder="gpt-4, gemini-pro"
+                          value={config.model}
+                          onChange={(e) => setConfig({ ...config, model: e.target.value })}
+                        />
+                      ): (
+                        <ModeSelector
+                          provider={config.provider}
+                          value={config.model}
+                          onChange={(mode: string) => {
+                            setConfig({ ...config, model: mode });
+                          }}
+                        />
+                      )}
                     </div>
                     
                     <div>
@@ -338,4 +349,3 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 };
 
 export default SettingsModal;
-
