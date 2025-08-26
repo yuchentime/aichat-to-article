@@ -82,22 +82,11 @@ const runGenerateArticleTask = async (task: Task) => {
 
   const lang = navigator.language || navigator.languages?.[0] || 'en';
   
-  // 添加超时机制
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new Error(getTextByLang(lang, "taskTimeout")));
-    }, 60000); // 30秒超时
-  });
-
   try {
     logger.background.info('调用生成函数', { domain: task.domain });
     const userInput = task.messages.join('\n');
     
-    // 使用Promise.race添加超时控制
-    const result = await Promise.race([
-      generateArticle(userInput, lang),
-      timeoutPromise
-    ]);
+    const result = await generateArticle(userInput, lang);
     
     logger.background.info('生成结果: ', result);
     await finalize(result);
