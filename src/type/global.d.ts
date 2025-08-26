@@ -14,7 +14,7 @@ interface Task {
   action: 'generateArticle' | 'directSave';
   domain: string;
   model: string;
-  status: 'pending' | 'running' | 'finished';
+  status: 'pending' | 'running' | 'finished' | 'error';
   result?: string;
   title?: string;
   summary?: string;

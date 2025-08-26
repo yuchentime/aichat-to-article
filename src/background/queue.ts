@@ -40,7 +40,11 @@ const runGenerateArticleTask = async (task: Task) => {
           logger.background.error('保存任务结果失败', { taskId: task.id, error: String(e) });
         }
       }
-      if (error) task.error = error;
+      
+      if (error) {
+        task.error = error;
+        task.status = 'error';
+      };
 
       taskState.finished.unshift(task);
       setBadgeText(String(taskState.running.length + taskState.pending.length));
@@ -81,12 +85,23 @@ const runGenerateArticleTask = async (task: Task) => {
   };
 
   const lang = navigator.language || navigator.languages?.[0] || 'en';
+
+    // 添加超时机制
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error(getTextByLang(lang, "taskTimeout")));
+    }, 180000); // 180秒超时
+  });
   
   try {
     logger.background.info('调用生成函数', { domain: task.domain });
     const userInput = task.messages.join('\n');
     
-    const result = await generateArticle(userInput, lang);
+    // 使用Promise.race添加超时控制
+    const result = await Promise.race([
+      generateArticle(userInput, lang),
+      timeoutPromise
+    ]);
     
     logger.background.info('生成结果: ', result);
     await finalize(result);

@@ -63,6 +63,13 @@ const ResultItem: React.FC<ResultItemProps> = React.memo(({
         {
           task.status === 'finished' ? (
             <SyncIndicator synced={task.synced} className="text-xs" />
+          ) : task.status === 'error' ? (
+            <span className="inline-flex items-center text-sm font-medium text-red-600 dark:text-red-400">
+              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v4m0 4h.01M12 5a7 7 0 110 14 7 7 0 010-14z" />
+              </svg>
+              <span className="truncate">{task.error || t('task_failed') || 'Task failed'}</span>
+            </span>
           ) : (
             <span className="text-sm text-blue-600 dark:text-blue-400 font-medium">
               {t('status_running') + '...'}
