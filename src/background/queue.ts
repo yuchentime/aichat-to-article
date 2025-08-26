@@ -40,7 +40,7 @@ const runGenerateArticleTask = async (task: Task) => {
           logger.background.error('保存任务结果失败', { taskId: task.id, error: String(e) });
         }
       }
-      
+
       if (error) {
         task.error = error;
         task.status = 'error';
@@ -108,7 +108,7 @@ const runGenerateArticleTask = async (task: Task) => {
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
-    logger.background.error('任务执行错误', { taskId: task.id, error: errMsg });
+    logger.background.error('任务执行错误: ', errMsg);
     
     // 确保即使finalize失败也能记录错误状态
     try {
