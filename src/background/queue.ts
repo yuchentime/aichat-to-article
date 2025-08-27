@@ -103,7 +103,7 @@ const runGenerateArticleTask = async (task: Task) => {
       timeoutPromise
     ]);
     
-    logger.background.info('生成结果: ', result);
+    // logger.background.info('生成结果: ', result);
     await finalize(result);
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {

@@ -49,6 +49,7 @@
 
   "sync_notion": { "message": "同步 Notion" },
   "select_location": {"message": "选择保存位置"},
+  "result_preview": {"message": "内容预览"},
 
   "copy_success": { "message": "结果已复制到剪贴板" },
   "copy_failed": { "message": "复制失败，请手动复制" },

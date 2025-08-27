@@ -24,6 +24,7 @@
 
   "status_pending": { "message": "Pending" },
   "status_running": { "message": "Running" },
+  "result_preview": {"message": "Content Preview"},
 
   "not_sync": { "message": "Not Synced" },
   "synced": { "message": "Synced" },

@@ -50,6 +50,7 @@
   "cancel_btn": { "message": "取消" },
   "save_btn": { "message": "儲存" },
   "provider_custom": { "message": "自訂" },
+  "result_preview": {"message": "內容預覽"},
 
   "sync_notion": { "message": "同步 Notion" },
 
