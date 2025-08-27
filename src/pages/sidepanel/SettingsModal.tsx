@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { encrypt, decrypt } from '../../lib/crypto';
 import { useI18n } from '../../lib/i18n';
-import { notionConfigStore } from '../../lib/storage';
 import { showToast } from '@/lib/toast';
 import ModeSelector from './ModeSelector';
-
-interface ApiConfig {
-    provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
-    apiKey: string;
-    model: string;
-    baseUrl: string;
-    currentUsing?: boolean;
-}
 
 const providers = [
     { value: 'grok', label: 'Grok' },
@@ -28,11 +18,6 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         baseUrl: '',
         currentUsing: false,
     });
-    const [notionConfig, setNotionConfig] = useState({
-        apiKey: '',
-        databaseId: '',
-        isConfigured: false
-    });
     const [activeTab, setActiveTab] = useState<'api' | 'language' | 'notion'>('api');
     const { t, lang, setLanguage } = useI18n();
     const [isNotionAuthed, setIsNotionAuthed] = useState(false);
@@ -45,7 +30,12 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             else if (apiConfig) configs = [apiConfig];
             if (configs.length) {
                 const first = configs[0];
-                const apiKey = first.apiKey ? await decrypt(first.apiKey) : '';
+                let apiKey = '';
+                if (first.apiKey) {
+                  const keyResp = await chrome.runtime.sendMessage({action: 'getApiKey', encrypted: first.apiKey});
+                  console.log('Getting apiKey from db: ', keyResp)
+                  apiKey = keyResp?.apiKey;
+                }
                 setConfig({
                     provider: first.provider,
                     apiKey,
@@ -55,9 +45,6 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 });
             }
 
-            // Load Notion configuration
-            const notionConfig = await notionConfigStore.get();
-            setNotionConfig(notionConfig);
         })();
 
         chrome.runtime.sendMessage({type: 'checkIfHasNotionCookie'}).then(res => {
@@ -90,7 +77,12 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
             const existed = configs.find((c) => c.provider === value);
             if (existed) {
-                const apiKey = existed.apiKey ? await decrypt(existed.apiKey) : '';
+                let apiKey = '';
+                if (existed.apiKey) {
+                  const keyResp = await chrome.runtime.sendMessage({action: 'getApiKey', encrypted: existed.apiKey});
+                  console.log('Getting apiKey from db: ', keyResp)
+                  apiKey = keyResp?.apiKey;
+                }
                 setConfig((prev) => ({
                     ...prev,
                     provider: value,
@@ -119,29 +111,10 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     };
 
     const handleSave = async () => {
-        const encrypted = config.apiKey ? await encrypt(config.apiKey) : '';
-        const toSave = { ...config, apiKey: encrypted };
-        const { apiConfig } = await chrome.storage.local.get('apiConfig');
-        let configs: ApiConfig[] = [];
-        if (Array.isArray(apiConfig)) configs = apiConfig;
-        else if (apiConfig) configs = [apiConfig];
-        const index = configs.findIndex((c) => c.provider === config.provider);
-        if (index >= 0) configs[index] = { ...configs[index], ...toSave };
-        else configs.push(toSave);
-        if (!configs.some((c) => c.currentUsing)) {
-            configs[0].currentUsing = true;
-        }
-        await chrome.storage.local.set({ apiConfig: configs });
+        chrome.runtime.sendMessage({action: 'saveApiKey', currentConfig: config}).then(res => {
+          onClose();
+        })
         
-        // Save Notion configuration
-        const encryptedNotionKey = notionConfig.apiKey ? await encrypt(notionConfig.apiKey) : '';
-        await notionConfigStore.set({
-            ...notionConfig,
-            apiKey: encryptedNotionKey,
-            isConfigured: !!notionConfig.apiKey && !!notionConfig.databaseId
-        });
-        
-        onClose();
     };
 
     const logoutNotion = () => {

@@ -11,7 +11,9 @@ import {
   handleDeleteTaskById,
   handleSearchNotionTarget,
   handleClearNotionCookie,
-  handleCheckIfHasNotionCookie
+  handleCheckIfHasNotionCookie,
+  handleSaveApiKey,
+  handleGetApiKey
 } from './messageHandlers';
 
 // 消息路由映射
@@ -31,7 +33,9 @@ const messageRoutes: Map<string, MessageHandler> = new Map([
   ['deleteTaskById', handleDeleteTaskById],
   ['searchNotionTarget', handleSearchNotionTarget],
   ['clearNotionCookie', handleClearNotionCookie],
-  ['checkIfHasNotionCookie', handleCheckIfHasNotionCookie]
+  ['checkIfHasNotionCookie', handleCheckIfHasNotionCookie],
+  ['saveApiKey', handleSaveApiKey],
+  ['getApiKey', handleGetApiKey]
 ]);
 
 // 路由器函数 - 只负责识别消息类型并转发

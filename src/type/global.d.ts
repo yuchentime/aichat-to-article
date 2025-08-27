@@ -24,3 +24,11 @@ interface Task {
   url?: string;
   notionUrl?: string;
 }
+
+interface ApiConfig {
+    provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
+    apiKey: string;
+    model: string;
+    baseUrl: string;
+    currentUsing?: boolean;
+}

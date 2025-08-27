@@ -4,6 +4,7 @@ import { submitGenerateTask, processQueue } from './queue';
 import { getTextByLang } from '@/lib/langConst';
 import { setBadgeText } from './badge';
 import { saveToNotion, checkIfHasNotionCookie, clearNotionCookie, searchTargets, ensureAuth } from './notion';
+import { encrypt, decrypt } from '@/lib/crypto';
 
 export type MessageHandler = (
   message: any,
@@ -124,6 +125,36 @@ export const handleClearNotionCookie: MessageHandler = (message, sender, sendRes
 export const handleCheckIfHasNotionCookie: MessageHandler = (message, sender, sendResponse) => {
   checkIfHasNotionCookie().then(
     data => sendResponse({ ok: data}),
+    err => sendResponse({ ok: false, error: String(err) })
+  );
+  return true;
+};
+
+export const handleSaveApiKey: MessageHandler = (message, sender, sendResponse) => {
+  const { currentConfig } = message
+  encrypt(currentConfig?.apiKey).then((encrypted) => {
+      const toSave = { ...currentConfig, apiKey: encrypted };
+      (async () => {
+        const { apiConfig } = await chrome.storage.local.get('apiConfig');
+        let configs: ApiConfig[] = [];
+        if (Array.isArray(apiConfig)) configs = apiConfig;
+        else if (apiConfig) configs = [apiConfig];
+        const index = configs.findIndex((c) => c.provider === message?.apiConfig.provider);
+        if (index >= 0) configs[index] = { ...configs[index], ...toSave };
+        else configs.push(toSave);
+        if (!configs.some((c) => c.currentUsing)) {
+            configs[0].currentUsing = true;
+        }
+        await chrome.storage.local.set({ apiConfig: configs });
+        sendResponse({ ok: true });
+      })()
+  });
+  return true;
+};
+
+export const handleGetApiKey: MessageHandler = (message, sender, sendResponse) => {
+  decrypt(message.encrypted).then(
+    data => sendResponse({ ok: true, apiKey: data}),
     err => sendResponse({ ok: false, error: String(err) })
   );
   return true;
