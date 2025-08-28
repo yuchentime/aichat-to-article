@@ -1,4 +1,4 @@
-import { updateSyncedState } from './state';
+import { updateSyncedState } from '../background/lib/state';
 
 const BACKEND = 'https://www.aichat2notion.com';
 

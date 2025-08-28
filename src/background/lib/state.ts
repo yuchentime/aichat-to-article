@@ -1,5 +1,5 @@
-import { logger } from '@/lib/logger';
-import { deleteTask, getTasksState as dbGetTasksState, putTasksState as dbPutTasksState, getResultBlob as dbGetResultBlob, putResultBlob as dbPutResultBlob } from '@/lib/db';
+import { logger } from '@/utils/logger';
+import { deleteTask, getTasksState as dbGetTasksState, putTasksState as dbPutTasksState, getResultBlob as dbGetResultBlob, putResultBlob as dbPutResultBlob } from '@/common/db';
 
 export type TaskBuckets = Record<'pending' | 'running' | 'finished', Task[]>;
 

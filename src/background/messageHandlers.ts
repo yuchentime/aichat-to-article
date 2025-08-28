@@ -1,10 +1,10 @@
-import { logger } from '@/lib/logger';
-import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById, taskState } from './state';
-import { submitGenerateTask, processQueue } from './queue';
-import { getTextByLang } from '@/lib/langConst';
-import { setBadgeText } from './badge';
-import { saveToNotion, checkIfHasNotionCookie, clearNotionCookie, searchTargets, ensureAuth } from './notion';
-import { encrypt, decrypt } from '@/lib/crypto';
+import { logger } from '@/utils/logger';
+import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById, taskState } from './lib/state';
+import { submitGenerateTask, processQueue } from './lib/queue';
+import { getTextByLang } from '@/common/i18n/langConst';
+import { setBadgeText } from './lib/badge';
+import { saveToNotion, checkIfHasNotionCookie, clearNotionCookie, searchTargets, ensureAuth } from '../api/notionApi';
+import { encrypt, decrypt } from '@/utils/crypto';
 
 export type MessageHandler = (
   message: any,

@@ -1,13 +1,13 @@
 import React, { lazy } from 'react';
-import MarkdownRenderer from './MarkdownRenderer';
-import { useI18n } from '../../lib/i18n';
+import MarkdownRenderer from '../markdown/MarkdownRenderer';
+import { useI18n } from '../../common/i18n';
 import chatgptLogo from '@/assets/img/chatgpt.png';
 import grokLogo from '@/assets/img/grok.png';
-import { showToast } from '@/lib/toast/index';
-import { convertMarkdownToNotionBlocks } from '@/lib/notionUtil';
+import { showToast } from '@/common/toast/index';
+import { convertMarkdownToNotionBlocks } from '../../utils/notionUtil';
 
-const NotionLocationPickerWithLazy = lazy(() => import('./NotionLocationPicker'));
-const LoadingWithLazy = lazy(() => import('./Loading'));
+const NotionLocationPickerWithLazy = lazy(() => import('../notion/NotionLocationPicker'));
+const LoadingWithLazy = lazy(() => import('../common/Loading'));
 
 type ResultModalProps = {
   id: string,

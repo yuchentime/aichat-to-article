@@ -1,4 +1,4 @@
-import { getTextByLang } from '@/lib/langConst';
+import { getTextByLang } from '@/common/i18n/langConst';
 
 const commonRequest = async (
     apiUrl: string,

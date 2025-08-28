@@ -1,6 +1,6 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/utils/logger';
 import { generateArticle } from '@/api/chatApi';
-import { getTextByLang } from '@/lib/langConst';
+import { getTextByLang } from '@/common/i18n/langConst';
 import { taskState, saveState, saveResult } from './state';
 import { setBadgeText } from './badge';
 import { sendNotification } from './notifications';

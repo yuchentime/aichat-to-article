@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import '../../styles/tailwind.css';
 import logo128 from '../../assets/img/icon-128.png';
-import { I18nProvider, useI18n } from '../../lib/i18n';
+import { I18nProvider, useI18n } from '../../common/i18n';
 
 function PopupInner() {
   const { t } = useI18n();

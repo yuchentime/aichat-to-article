@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/utils/logger';
 
 export const sendNotification = (title: string, message: string) => {
   chrome.notifications.getPermissionLevel((level) => {

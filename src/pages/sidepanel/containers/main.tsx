@@ -1,14 +1,14 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { createRoot } from 'react-dom/client';
-import '../../styles/tailwind.css';
-import { logger } from '../../lib/logger';
-import ResultItem from './ResultItem';
-import { I18nProvider, useI18n, normalizeLang } from '../../lib/i18n';
-import { useSidepanelData } from '../../hooks/useSidepanelData';
+import '../../../styles/tailwind.css';
+import { logger } from '../../../utils/logger';
+import ResultItem from '../../../components/common/ResultItem';
+import { I18nProvider, useI18n, normalizeLang } from '../../../common/i18n';
+import { useSidepanelData } from '../../../hooks/useSidepanelData';
 
 // 懒加载模态框组件
-const SettingsModal = lazy(() => import('./SettingsModal'));
-const ResultModal = lazy(() => import('./ResultModal'));
+const SettingsModal = lazy(() => import('../../../components/settings/SettingsModal'));
+const ResultModal = lazy(() => import('../../../components/common/ResultModal'));
 
 function SidePanelInner() {
   const { t, setLanguage } = useI18n();

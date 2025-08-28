@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '@/utils/logger';
 
 export const ensureContextMenus = (allowedHosts: string[]) => {
   const documentUrlPatterns = allowedHosts.map((host) => `*://${host}/*`);

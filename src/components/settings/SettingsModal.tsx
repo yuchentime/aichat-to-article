@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useI18n } from '../../lib/i18n';
-import { showToast } from '@/lib/toast';
-import ModeSelector from './ModeSelector';
+import { useI18n } from '../../common/i18n';
+import { showToast } from '@/common/toast';
+import ModeSelector from '../common/ModeSelector';
 
 const providers = [
     { value: 'grok', label: 'Grok' },

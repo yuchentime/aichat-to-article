@@ -1,6 +1,6 @@
 import { ARTICLE_SYSTEM_PROMPT, ARTICLE_SYSTEM_PROMPT_EN, ARTICLE_SYSTEM_PROMPT_ZH_TW } from '../prompts/article_prompt';
-import commonRequest from '../lib/commonRequest';
-import { decrypt } from '../lib/crypto';
+import commonRequest from './commonRequest';
+import { decrypt } from '../utils/crypto';
 
 interface ApiConfig {
     provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';

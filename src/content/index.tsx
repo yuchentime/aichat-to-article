@@ -1,7 +1,7 @@
-import {CollectorFactory} from '@/lib/collector/CollectorFactory';
-import { getTextByLang } from '@/lib/langConst';
-import { logger } from '@/lib/logger';
-import { showToast } from '@/lib/toast';
+import {CollectorFactory} from '@/collectors/CollectorFactory';
+import { getTextByLang } from '@/common/i18n/langConst';
+import { logger } from '@/utils/logger';
+import { showToast } from '@/common/toast';
 
 // Domains where the content script should respond
 const collectorFactory = new CollectorFactory();

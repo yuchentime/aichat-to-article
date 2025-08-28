@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { logger } from '../lib/logger';
+import { logger } from '../utils/logger';
 
 export interface ApiConfig {
   provider: 'grok' | 'chatgpt' | 'gemini' | 'custom';
