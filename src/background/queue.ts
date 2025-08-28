@@ -37,7 +37,7 @@ const runGenerateArticleTask = async (task: Task) => {
         try {
           await saveResult(task.id, result);
         } catch (e) {
-          logger.background.error('保存任务结果失败', { taskId: task.id, error: String(e) });
+          logger.background.warn('保存任务结果失败', { taskId: task.id, error: String(e) });
         }
       }
 
@@ -59,13 +59,13 @@ const runGenerateArticleTask = async (task: Task) => {
       try {
         await saveState();
       } catch (e) {
-        logger.background.error('save state failed', { taskId: task.id, error: String(e) });
+        logger.background.warn('save state failed', { taskId: task.id, error: String(e) });
       }
 
       logger.background.info('queue progress', { task });
     } catch (finalizeError) {
       // finalize函数本身的错误处理
-      logger.background.error('finalize函数执行失败', { 
+      logger.background.warn('finalize函数执行失败', { 
         taskId: task.id, 
         error: String(finalizeError),
         originalError: error,
@@ -108,13 +108,13 @@ const runGenerateArticleTask = async (task: Task) => {
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
-    logger.background.error('任务执行错误: ', errMsg);
+    logger.background.warn('任务执行错误: ', errMsg);
     
     // 确保即使finalize失败也能记录错误状态
     try {
       await finalize(undefined, errMsg);
     } catch (finalizeError) {
-      logger.background.error('错误处理过程中发生异常', { 
+      logger.background.warn('错误处理过程中发生异常', { 
         taskId: task.id, 
         originalError: errMsg,
         finalizeError: String(finalizeError) 
@@ -129,7 +129,7 @@ const runGenerateArticleTask = async (task: Task) => {
       try {
         await saveState();
       } catch (saveError) {
-        logger.background.error('无法保存错误状态', { 
+        logger.background.warn('无法保存错误状态', { 
           taskId: task.id, 
           error: String(saveError) 
         });
@@ -177,7 +177,7 @@ export const processQueue = async () => {
   try {
     await saveState();
   } catch (e) {
-    logger.background.error('保存任务状态失败?', { taskId: task.id, error: String(e) });
+    logger.background.warn('保存任务状态失败?', { taskId: task.id, error: String(e) });
   }
 
   await runGenerateArticleTask(task);
@@ -205,7 +205,6 @@ export const submitGenerateTask = async (
     logger.background.info('获取API配置', { apiConfig });
 
     if (!apiConfig || (Array.isArray(apiConfig) && apiConfig.length === 0)) {
-      logger.background.error('没有可用的API配置');
       respond({ ok: false, error: getTextByLang(navigator.language, 'noApi') });
       return;
     }
@@ -234,13 +233,13 @@ export const submitGenerateTask = async (
     try {
       await saveState();
     } catch (e) {
-      logger.background.error('保存任务状态失败?', { taskId: task.id, error: String(e) });
+      logger.background.warn('保存任务状态失败?', { taskId: task.id, error: String(e) });
     }
 
     processQueue();
     respond({ ok: true, id: task.id });
   } catch (e) {
-    logger.background.error('submitTask failed', { error: String(e) });
+    logger.background.warn('submitTask failed', { error: String(e) });
     respond({ ok: false, error: String(e) });
   }
 };
