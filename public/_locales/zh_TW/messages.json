@@ -1,6 +1,6 @@
 {
-  "ext_name": { "message": "AIChat to Notion" },
-  "ext_desc": { "message": "傳送 AI 對話結果到 Notion，並管理任務" },
+  "ext_name": { "message": "AIChat to Notion: 對話轉文章 & 知識庫同步" },
+  "ext_desc": { "message": "將您與 ChatGPT & Grok 的對話記錄自動整理成結構完整的文章，並同步儲存到 Notion，幫助您快速累積筆記、建構知識庫、提升學習與寫作效率。" },
 
   "logo_alt": { "message": "標誌" },
   "confirm": {"message":"確認"},
