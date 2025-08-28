@@ -1,6 +1,6 @@
 {
   "ext_name": { "message": "AIChat to Notion: Turn Conversations into Articles & Sync Knowledge Base" },
-  "ext_desc": { "message": "Automatically organize your ChatGPT & Grok conversations into well-structured articles and sync them to Notion, helping you quickly build notes, create a knowledge base, and boost learning and writing efficiency." },
+  "ext_desc": { "message": "Automatically organize your conversations with ChatGPT & Grok into well-structured articles, and sync them to Notion." },
 
   "logo_alt": { "message": "Logo" },
   "confirm": {"message":"Confirm"},
