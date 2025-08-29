@@ -1,5 +1,5 @@
 import { logger } from '@/utils/logger';
-import { generateArticle } from '@/api/chatApi';
+import { submitRequest } from '@/api/chatApi';
 import { getTextByLang } from '@/common/i18n/langConst';
 import { taskState, saveState, saveResult } from './state';
 import { setBadgeText } from './badge';
@@ -8,82 +8,70 @@ import { sendNotification } from './notifications';
 const taskQueue: Task[] = [];
 let processing = false;
 
+
+const finalize = async (task: Task, result?: string, error?: string) => {
+  logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
+  
+  try {
+    // 确保任务从running状态移除，即使后续操作失败
+    taskState.running = taskState.running.filter((t) => t.id !== task.id);
+    task.status = 'finished';
+    task.messages = [];
+
+    if (result) {
+      const summary: string[] = [];
+      const originalSummary = result.slice(0, 200).trim();
+      const summaryLines = originalSummary.split('\n');
+      for (let i = 0; i < summaryLines.length; i++) {
+        const line = summaryLines[i];
+        if (line.trim() === '\n' || line.trim() === '') continue;
+        if (line.trim().startsWith('##') || line.trim().startsWith('#')) {
+          if (!task.title) task.title = line.trim().replace(/#/g, ' ').trim();
+          continue;
+        }
+        summary.push(line.trim());
+      }
+      task.summary = summary.join('\n');
+      try {
+        await saveResult(task.id, result);
+      } catch (e) {
+        logger.background.warn('保存任务结果失败', { taskId: task.id, error: String(e) });
+      }
+    }
+
+    if (error) {
+      task.error = error;
+      task.status = 'error';
+    };
+
+    taskState.finished.unshift(task);
+    setBadgeText(String(taskState.running.length + taskState.pending.length));
+
+    if (result) {
+      sendNotification(getTextByLang(navigator.language, 'taskFinished'), getTextByLang(navigator.language, 'taskFinishedDesc'));
+    } else if (error) {
+      sendNotification(getTextByLang(navigator.language, 'taskFailed'), error || getTextByLang(navigator.language, 'taskFailed'));
+    }
+
+    logger.background.info('任务状态已更新为已完成', { taskId: task.id });
+    try {
+      await saveState();
+    } catch (e) {
+      logger.background.warn('save state failed', { taskId: task.id, error: String(e) });
+    }
+
+    logger.background.info('queue progress', { task });
+  } catch (finalizeError) {
+    handleGenerateError(task, error ?? "Unkown Error", finalizeError);
+  } finally {
+    processing = false;
+    logger.background.info('process next in queue');
+    processQueue();
+  }
+};
+
 const runGenerateArticleTask = async (task: Task) => {
   logger.background.info('run task', { taskId: task.id, action: task.action, domain: task.domain });
-
-  const finalize = async (result?: string, error?: string) => {
-    logger.background.info('完成任务处理', { taskId: task.id, hasResult: !!result, hasError: !!error });
-    
-    try {
-      // 确保任务从running状态移除，即使后续操作失败
-      taskState.running = taskState.running.filter((t) => t.id !== task.id);
-      task.status = 'finished';
-      task.messages = [];
-
-      if (result) {
-        const summary: string[] = [];
-        const originalSummary = result.slice(0, 200).trim();
-        const summaryLines = originalSummary.split('\n');
-        for (let i = 0; i < summaryLines.length; i++) {
-          const line = summaryLines[i];
-          if (line.trim() === '\n' || line.trim() === '') continue;
-          if (line.trim().startsWith('##') || line.trim().startsWith('#')) {
-            if (!task.title) task.title = line.trim().replace(/#/g, ' ').trim();
-            continue;
-          }
-          summary.push(line.trim());
-        }
-        task.summary = summary.join('\n');
-        try {
-          await saveResult(task.id, result);
-        } catch (e) {
-          logger.background.warn('保存任务结果失败', { taskId: task.id, error: String(e) });
-        }
-      }
-
-      if (error) {
-        task.error = error;
-        task.status = 'error';
-      };
-
-      taskState.finished.unshift(task);
-      setBadgeText(String(taskState.running.length + taskState.pending.length));
-
-      if (result) {
-        sendNotification(getTextByLang(navigator.language, 'taskFinished'), getTextByLang(navigator.language, 'taskFinishedDesc'));
-      } else if (error) {
-        sendNotification(getTextByLang(navigator.language, 'taskFailed'), error || getTextByLang(navigator.language, 'taskFailed'));
-      }
-
-      logger.background.info('任务状态已更新为已完成', { taskId: task.id });
-      try {
-        await saveState();
-      } catch (e) {
-        logger.background.warn('save state failed', { taskId: task.id, error: String(e) });
-      }
-
-      logger.background.info('queue progress', { task });
-    } catch (finalizeError) {
-      // finalize函数本身的错误处理
-      logger.background.warn('finalize函数执行失败', { 
-        taskId: task.id, 
-        error: String(finalizeError),
-        originalError: error,
-        hasResult: !!result 
-      });
-      
-      // 发送紧急通知
-      sendNotification(
-        getTextByLang(navigator.language, 'taskFailed'),
-        getTextByLang(navigator.language, 'taskCriticalError') || '任务处理发生严重错误'
-      );
-    } finally {
-      processing = false;
-      logger.background.info('process next in queue');
-      processQueue();
-    }
-  };
-
   const lang = navigator.language || navigator.languages?.[0] || 'en';
 
     // 添加超时机制
@@ -99,50 +87,48 @@ const runGenerateArticleTask = async (task: Task) => {
     
     // 使用Promise.race添加超时控制
     const result = await Promise.race([
-      generateArticle(userInput, lang),
+      submitRequest(userInput, lang),
       timeoutPromise
     ]);
     
     // logger.background.info('生成结果: ', result);
-    await finalize(result);
+    finalize(task, result);
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
     logger.background.warn('任务执行错误: ', errMsg);
-    
-    // 确保即使finalize失败也能记录错误状态
-    try {
-      await finalize(undefined, errMsg);
-    } catch (finalizeError) {
-      logger.background.warn('错误处理过程中发生异常', { 
-        taskId: task.id, 
-        originalError: errMsg,
-        finalizeError: String(finalizeError) 
-      });
-      
-      // 强制更新状态，避免任务卡在running
-      taskState.running = taskState.running.filter((t) => t.id !== task.id);
-      task.status = 'finished';
-      task.error = `${errMsg}`;
-      taskState.finished.unshift(task);
-      
-      try {
-        await saveState();
-      } catch (saveError) {
-        logger.background.warn('无法保存错误状态', { 
-          taskId: task.id, 
-          error: String(saveError) 
-        });
-      }
-      
-      setBadgeText(String(taskState.running.length + taskState.pending.length));
-      sendNotification(
-        getTextByLang(navigator.language, 'taskFailed'),
-        getTextByLang(navigator.language, 'taskCriticalError') || '任务处理发生严重错误'
-      );
-    }
+    finalize(task, undefined, errMsg);
   }
 };
+
+const handleGenerateError = async (task: Task, errMsg:string,finalizeError: any) => {
+  logger.background.warn('错误处理过程中发生异常', { 
+    taskId: task.id, 
+    originalError: errMsg,
+    finalizeError: String(finalizeError) 
+  });
+  
+  // 强制更新状态，避免任务卡在running
+  taskState.running = taskState.running.filter((t) => t.id !== task.id);
+  task.status = 'finished';
+  task.error = `${errMsg}`;
+  taskState.finished.unshift(task);
+  
+  try {
+    await saveState();
+  } catch (saveError) {
+    logger.background.warn('无法保存错误状态', { 
+      taskId: task.id, 
+      error: String(saveError) 
+    });
+  }
+  
+  setBadgeText(String(taskState.running.length + taskState.pending.length));
+  sendNotification(
+    getTextByLang(navigator.language, 'taskFailed'),
+    getTextByLang(navigator.language, 'taskCriticalError') || '任务处理发生严重错误'
+  );
+}
 
 export const loadingTaskQueue = async () => {
   logger.background.info('loading tasks in storage to task queue.', {taskState})
@@ -180,7 +166,7 @@ export const processQueue = async () => {
     logger.background.warn('保存任务状态失败?', { taskId: task.id, error: String(e) });
   }
 
-  await runGenerateArticleTask(task);
+  runGenerateArticleTask(task);
 };
 
 export const submitGenerateTask = async (

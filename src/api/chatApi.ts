@@ -95,7 +95,7 @@ const request = async (messages: any[]): Promise<string> => {
     }
 };
 
-export const generateArticle = async (userInput: string, lang: string): Promise<string> => {
+export const submitRequest = async (userInput: string, lang: string): Promise<string> => {
     const messages = [
         { role: 'system', content: getSystemPrompt(lang) },
         { role: 'user', content: userInput },
