@@ -104,7 +104,7 @@ export const submitOnceRequest = async (userInput: string, lang: string): Promis
     return request(messages);
 };
 
-export const submitMultiRequest = async (userInput: string, lang: string, history: string[]): Promise<string> => {
+export const submitMultiRequest = async (userInput: string, lang: string, history: string[], overlap: string): Promise<string> => {
     const messages = [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: USER_PROMPT
