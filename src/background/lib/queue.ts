@@ -1,9 +1,10 @@
 import { logger } from '@/utils/logger';
-import { submitRequest } from '@/api/chatApi';
+import { submitOnceRequest } from '@/api/chatApi';
 import { getTextByLang } from '@/common/i18n/langConst';
 import { taskState, saveState, saveResult } from './state';
 import { setBadgeText } from './badge';
 import { sendNotification } from './notifications';
+import { generateArticle } from './generateArticle';
 
 const taskQueue: Task[] = [];
 let processing = false;
@@ -66,7 +67,7 @@ const finalize = async (task: Task, result?: string, error?: string) => {
   } finally {
     processing = false;
     logger.background.info('process next in queue');
-    processQueue();
+    processTaskQueue();
   }
 };
 
@@ -75,24 +76,25 @@ const runGenerateArticleTask = async (task: Task) => {
   const lang = navigator.language || navigator.languages?.[0] || 'en';
 
     // 添加超时机制
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new Error(getTextByLang(lang, "taskTimeout")));
-    }, 180000); // 180秒超时
-  });
+  // const timeoutPromise = new Promise<never>((_, reject) => {
+  //   setTimeout(() => {
+  //     reject(new Error(getTextByLang(lang, "taskTimeout")));
+  //   }, 180000); // 180秒超时
+  // });
   
   try {
     logger.background.info('调用生成函数', { domain: task.domain });
     const userInput = task.messages.join('\n');
     
     // 使用Promise.race添加超时控制
-    const result = await Promise.race([
-      submitRequest(userInput, lang),
-      timeoutPromise
-    ]);
+    // const result = await Promise.race([
+    //   submitRequest(userInput, lang),
+    //   timeoutPromise
+    // ]);
+    generateArticle(task.messages)
     
     // logger.background.info('生成结果: ', result);
-    finalize(task, result);
+    // finalize(task, result);
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
@@ -133,11 +135,11 @@ const handleGenerateError = async (task: Task, errMsg:string,finalizeError: any)
 export const loadingTaskQueue = async () => {
   logger.background.info('loading tasks in storage to task queue.', {taskState})
   taskQueue.push(...taskState.running);
-  processQueue();
+  processTaskQueue();
   try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
 }
 
-export const processQueue = async () => {
+export const processTaskQueue = async () => {
   logger.background.info('process queue', { queueLength: taskQueue.length, processing });
   if (processing) {
     logger.background.info('already processing, skip');
@@ -222,7 +224,7 @@ export const submitGenerateTask = async (
       logger.background.warn('保存任务状态失败?', { taskId: task.id, error: String(e) });
     }
 
-    processQueue();
+    processTaskQueue();
     respond({ ok: true, id: task.id });
   } catch (e) {
     logger.background.warn('submitTask failed', { error: String(e) });

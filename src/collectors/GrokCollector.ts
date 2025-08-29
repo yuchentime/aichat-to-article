@@ -1,3 +1,5 @@
+import MessageCollector from './MessageCollector';
+
 export class GrokCollector extends MessageCollector {
 
   getChatMessages(): string[] {

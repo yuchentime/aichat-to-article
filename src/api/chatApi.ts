@@ -1,4 +1,4 @@
-import { ARTICLE_SYSTEM_PROMPT, ARTICLE_SYSTEM_PROMPT_EN, ARTICLE_SYSTEM_PROMPT_ZH_TW } from '../prompts/article_prompt';
+import { ARTICLE_SYSTEM_PROMPT, ARTICLE_SYSTEM_PROMPT_EN, ARTICLE_SYSTEM_PROMPT_ZH_TW, SYSTEM_PROMPT, USER_PROMPT } from '../prompts/article_prompt';
 import commonRequest from './commonRequest';
 import { decrypt } from '../utils/crypto';
 
@@ -95,10 +95,21 @@ const request = async (messages: any[]): Promise<string> => {
     }
 };
 
-export const submitRequest = async (userInput: string, lang: string): Promise<string> => {
+export const submitOnceRequest = async (userInput: string, lang: string): Promise<string> => {
     const messages = [
         { role: 'system', content: getSystemPrompt(lang) },
         { role: 'user', content: userInput },
+    ];
+
+    return request(messages);
+};
+
+export const submitMultiRequest = async (userInput: string, lang: string, history: string[]): Promise<string> => {
+    const messages = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: USER_PROMPT
+            .replace('{lastResult}', JSON.stringify(history))
+            .replace('{messageChunk}', userInput) },
     ];
 
     return request(messages);

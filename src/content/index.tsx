@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse: (response?
       action: message.action,
       payload: {
         domain: window.location.hostname,
-        chatMessages,
+        messages: chatMessages,
         taskId,
         url: window.location.href,
       },

@@ -1,3 +1,5 @@
+import MessageCollector from './MessageCollector';
+
 export class GeminiCollector extends MessageCollector {
   getChatMessages(): string[] {  
     const articleList = document.querySelectorAll("#chat-history > .chat-history > .conversation-container");

@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById, taskState } from './lib/state';
-import { submitGenerateTask, processQueue } from './lib/queue';
+import { submitGenerateTask, processTaskQueue } from './lib/queue';
 import { getTextByLang } from '@/common/i18n/langConst';
 import { setBadgeText } from './lib/badge';
 import { saveToNotion, checkIfHasNotionCookie, clearNotionCookie, searchTargets, ensureAuth } from '../api/notionApi';
@@ -93,7 +93,7 @@ export const handleDeleteTaskById: MessageHandler = (message, sender, sendRespon
       taskState.running = taskState.running.filter(task => task.id !== message.id);
       taskState.finished = taskState.finished.filter(task => task.id !== message.id);
       setBadgeText(String(taskState.pending.length + taskState.running.length))
-      processQueue();
+      processTaskQueue();
       sendResponse({ ok: true});
     } catch (e) {
       logger.background.error('获取任务状态失败?', { error: String(e) });

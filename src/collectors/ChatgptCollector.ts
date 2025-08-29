@@ -1,3 +1,5 @@
+import MessageCollector from './MessageCollector';
+
 export class ChatGptCollector extends MessageCollector {
 
     getChatMessages(): string[] {

@@ -4,24 +4,6 @@ interface Message {
   content: string;
 }
 
-abstract class MessageCollector {
-  getChatMessages(): string[];
-
-  convertToJsonList(chatList: NodeListOf<Element>): string[] {
-    const messages: Message[] = [];
-    for (let i=0; i < chatList.length; i++) {
-      const chat = chatList[i];
-      const content = html2md(chat.innerHTML);
-      if (i%2 === 1) {
-        messages.push(JSON.stringify({role: 'user', content}));
-      } else {
-        messages.push(JSON.stringify({role: 'ai', content}));
-      }
-    };
-    return messages;
-  }
-
-}
 
 interface Task {
   id: string;

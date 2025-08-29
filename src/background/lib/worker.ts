@@ -1,4 +1,4 @@
-import { submitRequest } from "@/api/chatApi";
+import { submitOnceRequest } from "@/api/chatApi";
 
 interface WorkerTask {
   id: string;
@@ -12,7 +12,7 @@ self.onmessage = async (e: MessageEvent<WorkerTask>) => {
   try {
     let result = '';
     if (task.action === 'generate') {
-      result = await submitRequest(JSON.stringify(task.messages), navigator.language);
+      result = await submitOnceRequest(JSON.stringify(task.messages), navigator.language);
     }
     (self as any).postMessage({ id: task.id, result });
   } catch (err) {

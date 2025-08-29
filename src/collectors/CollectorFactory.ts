@@ -1,6 +1,7 @@
 import { ChatGptCollector } from './ChatgptCollector';
 import { GrokCollector } from './GrokCollector';
 import { DefaultCollector } from './DefaultCollector';
+import MessageCollector from './MessageCollector';
 
 export class CollectorFactory {
   constructor() {}
