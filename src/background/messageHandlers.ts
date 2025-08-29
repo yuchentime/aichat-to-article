@@ -139,7 +139,7 @@ export const handleSaveApiKey: MessageHandler = (message, sender, sendResponse) 
         let configs: ApiConfig[] = [];
         if (Array.isArray(apiConfig)) configs = apiConfig;
         else if (apiConfig) configs = [apiConfig];
-        const index = configs.findIndex((c) => c.provider === message?.apiConfig.provider);
+        const index = configs.findIndex((c) => c.provider === message?.apiConfig?.provider);
         if (index >= 0) configs[index] = { ...configs[index], ...toSave };
         else configs.push(toSave);
         if (!configs.some((c) => c.currentUsing)) {
