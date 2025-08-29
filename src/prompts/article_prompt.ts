@@ -42,7 +42,6 @@ export const ARTICLE_SYSTEM_PROMPT = `
 - 剔除人称代词，如“我”、“我们”、“您”等；也不要出现任何带有身份性质的代称，如“用户”、“AI”、“一位开发者”等。
 - 仅输出最终生成的文章内容，避免任何多余的说明性文字或元注释。
 - 生成的文章内容严格限于提供的聊天对话记录，不引入外部信息或推测。
-
 `
 
 export const ARTICLE_SYSTEM_PROMPT_EN = `

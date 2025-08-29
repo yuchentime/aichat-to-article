@@ -1,6 +1,6 @@
 
-export class DefaultCollector implements MessageCollector {
-  getAllMessages(): string[] {  
+export class DefaultCollector extends MessageCollector {
+  getChatMessages(): string[] {  
     return [];
   }
 

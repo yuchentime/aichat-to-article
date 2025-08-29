@@ -11,9 +11,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse: (response?
   console.log('Content script received message:', message);
   if (message?.type === 'saveToNotion') {
     const taskId = window.location.href.replace(/\/$/, '').split('/').pop();
-    const messages: string[] = collectorFactory.getCollectorInstance(window.location.hostname).getAllMessages();
-    logger.content.info('Collected messages', messages);
-    if (messages.length === 0) {
+    const chatMessages: string[] = collectorFactory.getCollectorInstance(window.location.hostname).getChatMessages();
+    logger.content.info('Collected messages', chatMessages);
+    if (!chatMessages || chatMessages.length === 0) {
       showToast('warn', getTextByLang(navigator.language, 'noMessages'));
       sendResponse({ ok: false, error: 'No messages found' });
       return true; // Keep message channel open for async response
@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse: (response?
       action: message.action,
       payload: {
         domain: window.location.hostname,
-        messages,
+        chatMessages,
         taskId,
         url: window.location.href,
       },

@@ -1,24 +1,11 @@
-import html2md from 'html-to-md';
-
-export class GeminiCollector implements MessageCollector {
-  getAllMessages(): string[] {  
-    const messages: string[] = [];
+export class GeminiCollector extends MessageCollector {
+  getChatMessages(): string[] {  
     const articleList = document.querySelectorAll("#chat-history > .chat-history > .conversation-container");
     if (articleList.length === 0) {
         console.warn("No messages found on the page.");
-        return messages;
+        return [];
     }
-    let whoSaid = '#### You said:';
-    for (const article of articleList) {
-        const content = html2md(article.innerHTML);
-        messages.push(whoSaid + " " + content);
-        if (whoSaid === '#### You said:') {
-            whoSaid = '#### AI said:';
-        } else {
-            whoSaid = '#### You said:';
-        }
-    };
-    return messages;
+    return this.convertToJsonList(articleList);
   }
 
 }

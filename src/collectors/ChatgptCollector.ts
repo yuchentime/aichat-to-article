@@ -1,19 +1,12 @@
-import html2md from 'html-to-md';
+export class ChatGptCollector extends MessageCollector {
 
-export class ChatGptCollector implements MessageCollector {
-
-    getAllMessages(): string[] {
-        const messages: string[] = [];
+    getChatMessages(): string[] {
         const articleList = document.querySelectorAll("article");
         if (articleList.length === 0) {
             console.warn("No messages found on the page.");
-            return messages;
+            return [];
         }
-        for (const article of articleList) {
-            const content = html2md(article.innerHTML);
-            messages.push(content);
-        };
-        return messages;
+        return this.convertToJsonList(articleList);
     }
 }
 
