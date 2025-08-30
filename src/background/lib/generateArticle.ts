@@ -10,26 +10,34 @@ export const generateArticle = async (messages: string[]) => {
 
     let offset = 0;
     const page = Math.floor(messages.length / 10) + 1;
-    const results: string[] = await handleMessagesChunk(offset, page, messages, []);
+    const results: string[] = [];
+    await iterativeMessagesChunk(offset, page, messages, "", results);
     
     console.log("最终结果：", results)
 }
 
-const handleMessagesChunk = async (offset: number, page: number, messages: string[], history: string[]): Promise<string[]> => {
+const iterativeMessagesChunk = async (offset: number, page: number, messages: string[], lastResult: string, results: string[]) => {
     const lang = navigator.language || navigator.languages?.[0] || 'en';
 
     const end = (messages.length - offset) >= 6 ? offset + 6: messages.length;
     const messagesChunk = messages.slice(offset, end);
+    if (messages?.[end]) {
+        messagesChunk.push(messages?.[end])
+    }
     console.log('当前消息块：', messagesChunk)
     const userInput = messagesChunk.join('\n');
-    const result = await submitMultiRequest(userInput, lang, history);
+    const result = await submitMultiRequest(userInput, lang, lastResult);
     console.log('当前输出结果：', result)
-    history.push(result);
+    results.push(result);
 
     offset = end;
 
     if (end < messages.length) {
-        handleMessagesChunk(offset, page, messages, history);
+        iterativeMessagesChunk(offset, page, messages, result, results);
     }
-    return history;
+    return;
+}
+
+const mapReduce = async () => {
+    
 }

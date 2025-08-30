@@ -104,11 +104,11 @@ export const submitOnceRequest = async (userInput: string, lang: string): Promis
     return request(messages);
 };
 
-export const submitMultiRequest = async (userInput: string, lang: string, history: string[], overlap: string): Promise<string> => {
+export const submitMultiRequest = async (userInput: string, lang: string, lastResult: string): Promise<string> => {
     const messages = [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: USER_PROMPT
-            .replace('{lastResult}', JSON.stringify(history))
+            .replace('{lastResult}', lastResult)
             .replace('{messageChunk}', userInput) },
     ];
 
