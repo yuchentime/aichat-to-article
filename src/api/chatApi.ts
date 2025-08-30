@@ -1,4 +1,4 @@
-import { ARTICLE_SYSTEM_PROMPT, ARTICLE_SYSTEM_PROMPT_EN, ARTICLE_SYSTEM_PROMPT_ZH_TW, SYSTEM_PROMPT, USER_PROMPT } from '../prompts/article_prompt';
+import { CLARIFICATION_SYSTME_PROMPT, ARTICLE_SYSTEM_PROMPT, ARTICLE_SYSTEM_PROMPT_EN, ARTICLE_SYSTEM_PROMPT_ZH_TW, SYSTEM_PROMPT, USER_PROMPT } from '../prompts/article_prompt';
 import commonRequest from './commonRequest';
 import { decrypt } from '../utils/crypto';
 
@@ -30,7 +30,7 @@ const getConfig = async (): Promise<ApiConfig> => {
     );
 };
 
-const request = async (messages: any[]): Promise<string> => {
+export const request = async (messages: any[]): Promise<string> => {
     const config = await getConfig();
 
     if (!config.apiKey) {
@@ -103,6 +103,15 @@ export const submitOnceRequest = async (userInput: string, lang: string): Promis
 
     return request(messages);
 };
+
+export const clarification = (input: string) => {
+    const messages = [
+        { role: 'system', content: CLARIFICATION_SYSTME_PROMPT },
+        { role: 'user', content: input },
+    ];
+
+    return request(messages);
+}
 
 export const submitMultiRequest = async (userInput: string, lang: string, lastResult: string): Promise<string> => {
     const messages = [

@@ -14,7 +14,6 @@ const commonRequest = async (
             },
             body,
         });
-        console.log('API请求响应:', response);
         if (!response.ok) {
             let errorText = '';
             if (errorText === '' && response.status === 401) {
