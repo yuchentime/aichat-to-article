@@ -1,37 +1,33 @@
-import { submitOnceRequest, submitMultiRequest, clarification, request } from '@/api/chatApi';
-import { MAPREDUCE_SYSTEM_PROMPT, MAPREDUCE_USER_PROMPT, DISCUSS_SYSTEM_PROMPT,ITERATION_SYSTEM_PROMPT,ITERATION_INIT_USER_PROMPT,ITERATION_NEW_USER_PROMPT,PS_SYSTEM_PROMPT } from '@/prompts/article_prompt';
+import { submitOnceRequest, clarification, submitRequest } from '@/api/chatApi';
+import { KNOWLEDGE_SYSTEM_PROMPT, KNOWLEDGE_USER_PROMPT, FINAL_KNOWLEDGE_SYSTEM_PROMPT,PROBELM_SOLVE_SYSTEM_PROMPT,PROBELM_SOLVE_INIT_USER_PROMPT,PROBELM_SOLVE_NEW_USER_PROMPT,FINAL_PROBELM_SOLVE_SYSTEM_PROMPT } from '@/prompts/article_prompt';
 
-const size = 4;
+const size = 8;
+const iterationSize = 6;
 
 export const generateArticle = async (messages: string[]) => {
-    const lang = navigator.language || navigator.languages?.[0] || 'en';
     if (messages.length <= size) {
-        submitOnceRequest(JSON.stringify(messages), lang);
-        return;
+        return submitOnceRequest(JSON.stringify(messages));
     }
 
     const input = JSON.stringify(messages.slice(0,4));
     const classResult = await clarification(input);
     console.log('分类结果: ', classResult);
-    let finalResult = await iterative(messages);
 
-    // let finalResult = '';
-    // if (classResult.includes("问题解决型")) {
-    //   let offset = 0;
-    //   const page = Math.floor(messages.length / size) + 1;
-    //   const results: string[] = [];
-    //   await iterativeMessagesChunk(offset, page, messages, "", results);
-    // } else {
-    //   await mapReduce(messages);
-    // }
+    let finalResult = '';
+    if (classResult.includes("问题解决型")) {
+      finalResult = await iterative(messages);
+    } else {
+      finalResult = await mapReduce(messages);
+    }
     
     console.log("最终结果：", finalResult)
+    return finalResult;
 }
 
 const iterative = async (messages: string[]) => {
     const messageGroups: any[] = [];
-    for (let i = 0; i < messages.length; i += size) {
-      messageGroups.push({index: i+1, chunks: messages.slice(i, i + size)});
+    for (let i = 0; i < messages.length; i += iterationSize) {
+      messageGroups.push({index: i+1, chunks: messages.slice(i, i + iterationSize)});
     }
 
     let currentSummary = '';
@@ -40,29 +36,29 @@ const iterative = async (messages: string[]) => {
       let messages;
       if (i === 0) {
         messages = [
-            { role: 'system', content: ITERATION_SYSTEM_PROMPT },
-            { role: 'user', content: ITERATION_INIT_USER_PROMPT
+            { role: 'system', content: PROBELM_SOLVE_SYSTEM_PROMPT },
+            { role: 'user', content: PROBELM_SOLVE_INIT_USER_PROMPT
               .replace('{messageChunks}', JSON.stringify(messageGroup.chunks)) },
         ];
       } else {
         messages = [
-            { role: 'system', content: ITERATION_SYSTEM_PROMPT },
-            { role: 'user', content: ITERATION_NEW_USER_PROMPT
+            { role: 'system', content: PROBELM_SOLVE_SYSTEM_PROMPT },
+            { role: 'user', content: PROBELM_SOLVE_NEW_USER_PROMPT
               .replace('{turnId}', String(i+1))
               .replace('{lastSummary}', currentSummary)
               .replace('{messageChunks}', JSON.stringify(messageGroup.chunks)) },
         ];
       }
-      currentSummary = await request(messages);
+      currentSummary = await submitRequest(messages);
       console.log('当前摘要内容: ', currentSummary)
     }
     const summary = currentSummary.replace('```json', '').replace('```', '').replace(/\n/g, '');
     
     const articleMessage = [
-      { role: 'system', content: DISCUSS_SYSTEM_PROMPT },
+      { role: 'system', content: FINAL_PROBELM_SOLVE_SYSTEM_PROMPT },
       { role: 'user', content: `## User Input:\n---\n${summary}\n---` },
     ];
-    return await request(articleMessage);
+    return await submitRequest(articleMessage);
 }
 
 const mapReduce = async (messages: string[]) => {
@@ -73,12 +69,12 @@ const mapReduce = async (messages: string[]) => {
 
     const results = await Promise.allSettled(messageGroups.map(messageGroup => {
       const messages = [
-          { role: 'system', content: MAPREDUCE_SYSTEM_PROMPT },
-          { role: 'user', content: MAPREDUCE_USER_PROMPT
+          { role: 'system', content: KNOWLEDGE_SYSTEM_PROMPT },
+          { role: 'user', content: KNOWLEDGE_USER_PROMPT
             .replace('{index}', messageGroup.index)
             .replace('{messageChunks}', JSON.stringify(messageGroup.chunks)) },
       ];
-      return request(messages);
+      return submitRequest(messages);
     }));
 
     const resultList = results.map(result => {
@@ -91,9 +87,9 @@ const mapReduce = async (messages: string[]) => {
     console.log('mapReduce results: ', resultList);
 
     const articleMessage = [
-      { role: 'system', content: DISCUSS_SYSTEM_PROMPT },
+      { role: 'system', content: FINAL_KNOWLEDGE_SYSTEM_PROMPT },
       { role: 'user', content: JSON.stringify(resultList) },
     ];
-    return await request(articleMessage);
+    return await submitRequest(articleMessage);
 
 }

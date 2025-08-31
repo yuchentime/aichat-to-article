@@ -1,5 +1,4 @@
 import { logger } from '@/utils/logger';
-import { submitOnceRequest } from '@/api/chatApi';
 import { getTextByLang } from '@/common/i18n/langConst';
 import { taskState, saveState, saveResult } from './state';
 import { setBadgeText } from './badge';
@@ -73,28 +72,13 @@ const finalize = async (task: Task, result?: string, error?: string) => {
 
 const runGenerateArticleTask = async (task: Task) => {
   logger.background.info('run task', { taskId: task.id, action: task.action, domain: task.domain });
-  const lang = navigator.language || navigator.languages?.[0] || 'en';
-
-    // 添加超时机制
-  // const timeoutPromise = new Promise<never>((_, reject) => {
-  //   setTimeout(() => {
-  //     reject(new Error(getTextByLang(lang, "taskTimeout")));
-  //   }, 180000); // 180秒超时
-  // });
   
   try {
     logger.background.info('调用生成函数', { domain: task.domain });
-    const userInput = task.messages.join('\n');
     
-    // 使用Promise.race添加超时控制
-    // const result = await Promise.race([
-    //   submitRequest(userInput, lang),
-    //   timeoutPromise
-    // ]);
-    generateArticle(task.messages)
+    const result = await generateArticle(task.messages)
     
-    // logger.background.info('生成结果: ', result);
-    // finalize(task, result);
+    finalize(task, result);
     logger.background.info('任务执行成功', { taskId: task.id });
   } catch (e) {
     const errMsg = e instanceof Error ? e.message : String(e);
