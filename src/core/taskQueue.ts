@@ -1,8 +1,8 @@
 import { logger } from '@/utils/logger';
 import { getTextByLang } from '@/common/i18n/langConst';
-import { taskState, saveState, saveResult } from './state';
-import { setBadgeText } from './badge';
-import { sendNotification } from './notifications';
+import { taskState, saveState, saveResult } from '../background/lib/state';
+import { setBadgeText } from '../background/lib/badge';
+import { sendNotification } from '../background/lib/notifications';
 import { generateArticle } from './generateArticle';
 
 const taskQueue: Task[] = [];

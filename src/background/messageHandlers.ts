@@ -1,6 +1,6 @@
 import { logger } from '@/utils/logger';
 import { hydrateState, isHydrated, getTaskState, getResult, deleteTaskById, taskState } from './lib/state';
-import { submitGenerateTask, processTaskQueue } from './lib/queue';
+import { submitGenerateTask, processTaskQueue } from '../core/taskQueue';
 import { getTextByLang } from '@/common/i18n/langConst';
 import { setBadgeText } from './lib/badge';
 import { saveToNotion, checkIfHasNotionCookie, clearNotionCookie, searchTargets, ensureAuth } from '../api/notionApi';

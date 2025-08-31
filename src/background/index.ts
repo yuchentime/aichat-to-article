@@ -1,6 +1,6 @@
 import { ensureContextMenus, registerContextMenuClickHandler } from './lib/contextMenus';
 import { hydrateState } from './lib/state';
-import { loadingTaskQueueFromDb } from './lib/queue';
+import { loadingTaskQueueFromDb } from '../core/taskQueue';
 import { routeMessage } from './messageRouter';
 
 const allowedHosts = ['chatgpt.com', 'grok.com'];

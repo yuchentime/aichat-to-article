@@ -1,6 +1,6 @@
 import React, { lazy } from 'react';
 import MarkdownRenderer from '../markdown/MarkdownRenderer';
-import { useI18n } from '../../common/i18n';
+import { useI18n } from '../../common/i18n/i18n';
 import chatgptLogo from '@/assets/img/chatgpt.png';
 import grokLogo from '@/assets/img/grok.png';
 import { showToast } from '@/common/toast/index';

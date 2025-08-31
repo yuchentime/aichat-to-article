@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useI18n } from '../../common/i18n';
+import { useI18n } from '../../common/i18n/i18n';
 import { showToast } from '@/common/toast';
 import ModeSelector from '../common/ModeSelector';
 

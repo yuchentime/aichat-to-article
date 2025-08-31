@@ -1,5 +1,5 @@
 import React from 'react';
-import { useI18n } from '../../common/i18n';
+import { useI18n } from '../../common/i18n/i18n';
 
 interface SyncIndicatorProps {
   synced: boolean;
