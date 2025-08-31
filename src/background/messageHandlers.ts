@@ -130,25 +130,58 @@ export const handleCheckIfHasNotionCookie: MessageHandler = (message, sender, se
   return true;
 };
 
-export const handleSaveApiKey: MessageHandler = (message, sender, sendResponse) => {
-  const { currentConfig } = message
-  encrypt(currentConfig?.apiKey).then((encrypted) => {
-      const toSave = { ...currentConfig, apiKey: encrypted };
-      (async () => {
-        const { apiConfig } = await chrome.storage.local.get('apiConfig');
-        let configs: ApiConfig[] = [];
-        if (Array.isArray(apiConfig)) configs = apiConfig;
-        else if (apiConfig) configs = [apiConfig];
-        const index = configs.findIndex((c) => c.provider === message?.apiConfig?.provider);
-        if (index >= 0) configs[index] = { ...configs[index], ...toSave };
-        else configs.push(toSave);
-        if (!configs.some((c) => c.currentUsing)) {
-            configs[0].currentUsing = true;
-        }
-        await chrome.storage.local.set({ apiConfig: configs });
-        sendResponse({ ok: true });
-      })()
-  });
+export const handleSaveApiKey: MessageHandler = (message, _sender, sendResponse) => {
+  (async () => {
+    try {
+      const { currentConfig } = message; // 期望包含 { provider, apiKey, ... }
+      if (!currentConfig?.provider) {
+        sendResponse({ ok: false, error: 'provider 缺失' });
+        return;
+      }
+
+      const encrypted = await encrypt(currentConfig.apiKey ?? '');
+      const toSave: ApiConfig = { ...currentConfig, apiKey: encrypted };
+
+      // 读取存储
+      const { apiConfig } = await chrome.storage.local.get('apiConfig');
+      let configs: ApiConfig[] = Array.isArray(apiConfig)
+        ? apiConfig
+        : apiConfig
+        ? [apiConfig]
+        : [];
+
+      const norm = (s: unknown) =>
+        typeof s === 'string' ? s.toLowerCase() : String(s ?? '');
+
+      // 用 currentConfig.provider 对比
+      const idx = configs.findIndex(c => norm(c.provider) === norm(toSave.provider));
+
+      if (idx >= 0) {
+        // 覆盖同 provider 的项；默认保留原来的 currentUsing（除非 toSave 显式给了）
+        const keepCurrentUsing = configs[idx].currentUsing && toSave.currentUsing == null;
+        configs[idx] = { ...configs[idx], ...toSave, ...(keepCurrentUsing ? { currentUsing: true } : {}) };
+      } else {
+        // 新 provider：若当前没有任何 currentUsing，则把这个设为当前
+        const anyUsing = configs.some(c => c.currentUsing);
+        configs.push({ ...toSave, ...(anyUsing ? {} : { currentUsing: true }) });
+      }
+
+      // 兜底：确保最多只有一个 currentUsing（保留最后一次更新/新增的那一个）
+      const activeIndices = configs.reduce<number[]>((acc, c, i) => (c.currentUsing ? acc.concat(i) : acc), []);
+      if (activeIndices.length > 1) {
+        const keep = idx >= 0 ? idx : configs.length - 1;
+        configs = configs.map((c, i) => ({ ...c, currentUsing: i === keep }));
+      }
+
+      await chrome.storage.local.set({ apiConfig: configs });
+      sendResponse({ ok: true });
+    } catch (err) {
+      console.error(err);
+      sendResponse({ ok: false, error: String(err) });
+    }
+  })();
+
+  // 告诉 Chrome 这是异步响应
   return true;
 };
 
