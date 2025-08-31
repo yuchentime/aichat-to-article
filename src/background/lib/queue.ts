@@ -70,7 +70,7 @@ const finalize = async (task: Task, result?: string, error?: string) => {
   }
 };
 
-const runGenerateArticleTask = async (task: Task) => {
+const executeTask = async (task: Task) => {
   logger.background.info('run task', { taskId: task.id, action: task.action, domain: task.domain });
   
   try {
@@ -116,9 +116,9 @@ const handleGenerateError = async (task: Task, errMsg:string,finalizeError: any)
   );
 }
 
-export const loadingTaskQueue = async () => {
+export const loadingTaskQueueFromDb = async () => {
   logger.background.info('loading tasks in storage to task queue.', {taskState})
-  taskQueue.push(...taskState.running);
+  taskQueue.push(...taskState.running.splice(0));
   processTaskQueue();
   try { await chrome.runtime.sendMessage({ type: 'tasksStateUpdated' }); } catch {}
 }
@@ -128,6 +128,10 @@ export const processTaskQueue = async () => {
   if (processing) {
     logger.background.info('already processing, skip');
     return;
+  }
+
+  if (taskQueue.length === 0) {
+    taskQueue.push(...taskState.pending.splice(0));
   }
 
   const task = taskQueue.shift();
@@ -152,7 +156,7 @@ export const processTaskQueue = async () => {
     logger.background.warn('保存任务状态失败?', { taskId: task.id, error: String(e) });
   }
 
-  runGenerateArticleTask(task);
+  executeTask(task);
 };
 
 export const submitGenerateTask = async (

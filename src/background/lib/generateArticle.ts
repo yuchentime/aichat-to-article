@@ -1,5 +1,5 @@
 import { submitOnceRequest, clarification, submitRequest } from '@/api/chatApi';
-import { KNOWLEDGE_SYSTEM_PROMPT, KNOWLEDGE_USER_PROMPT, FINAL_KNOWLEDGE_SYSTEM_PROMPT,PROBELM_SOLVE_SYSTEM_PROMPT,PROBELM_SOLVE_INIT_USER_PROMPT,PROBELM_SOLVE_NEW_USER_PROMPT,FINAL_PROBELM_SOLVE_SYSTEM_PROMPT } from '@/prompts/article_prompt';
+import { KNOWLEDGE_SYSTEM_PROMPT, KNOWLEDGE_USER_PROMPT, FINAL_ARTICLE_SYSTEM_PROMPT,PROBELM_SOLVE_SYSTEM_PROMPT,PROBELM_SOLVE_INIT_USER_PROMPT,PROBELM_SOLVE_NEW_USER_PROMPT,FINAL_PROBELM_SOLVE_SYSTEM_PROMPT } from '@/prompts/article_prompt';
 
 const size = 8;
 const iterationSize = 6;
@@ -15,16 +15,16 @@ export const generateArticle = async (messages: string[]) => {
 
     let finalResult = '';
     if (classResult.includes("问题解决型")) {
-      finalResult = await iterative(messages);
+      finalResult = await problemSolve(messages);
     } else {
-      finalResult = await mapReduce(messages);
+      finalResult = await knowledgeDiscussion(messages);
     }
     
     console.log("最终结果：", finalResult)
     return finalResult;
 }
 
-const iterative = async (messages: string[]) => {
+const problemSolve = async (messages: string[]) => {
     const messageGroups: any[] = [];
     for (let i = 0; i < messages.length; i += iterationSize) {
       messageGroups.push({index: i+1, chunks: messages.slice(i, i + iterationSize)});
@@ -55,13 +55,13 @@ const iterative = async (messages: string[]) => {
     const summary = currentSummary.replace('```json', '').replace('```', '').replace(/\n/g, '');
     
     const articleMessage = [
-      { role: 'system', content: FINAL_PROBELM_SOLVE_SYSTEM_PROMPT },
+      { role: 'system', content: FINAL_ARTICLE_SYSTEM_PROMPT.replace("{article_type}", "知识探讨型") },
       { role: 'user', content: `## User Input:\n---\n${summary}\n---` },
     ];
     return await submitRequest(articleMessage);
 }
 
-const mapReduce = async (messages: string[]) => {
+const knowledgeDiscussion = async (messages: string[]) => {
     const messageGroups: any[] = [];
     for (let i = 0; i < messages.length; i += size) {
       messageGroups.push({index: i+1, chunks: messages.slice(i, i + size)});
@@ -87,7 +87,7 @@ const mapReduce = async (messages: string[]) => {
     console.log('mapReduce results: ', resultList);
 
     const articleMessage = [
-      { role: 'system', content: FINAL_KNOWLEDGE_SYSTEM_PROMPT },
+      { role: 'system', content: FINAL_ARTICLE_SYSTEM_PROMPT.replace("{article_type}", "知识探讨型") },
       { role: 'user', content: JSON.stringify(resultList) },
     ];
     return await submitRequest(articleMessage);

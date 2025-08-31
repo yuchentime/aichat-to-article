@@ -15,8 +15,8 @@ const commonRequest = async (
             body,
         });
         if (!response.ok) {
-            let errorText = '';
-            if (errorText === '' && response.status === 401) {
+            let errorText = response.statusText;
+            if (!errorText && response.status === 401) {
                errorText = getTextByLang(navigator.language, 'tokenInvalid') || 'Token is missing or invalid';
             } else if (errorText === '') {
                errorText = getTextByLang(navigator.language, 'tokenExhausted') || 'Please check if the token quota is exhausted or try again later';
