@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import '../../../styles/tailwind.css';
 import { logger } from '../../../utils/logger';
 import ResultItem from '../../../components/common/ResultItem';
-import { I18nProvider, useI18n, normalizeLang } from '../../../common/i18n';
+import { I18nProvider, useI18n, normalizeLang } from '../../../common/i18n/i18n';
 import { useSidepanelData } from '../../../hooks/useSidepanelData';
 
 // 懒加载模态框组件

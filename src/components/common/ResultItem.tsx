@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { SyncIndicator } from '../ui/SyncIndicator';
 import { showToast } from '@/common/toast';
-import { useI18n } from '../../common/i18n';
+import { useI18n } from '../../common/i18n/i18n';
 import MarkdownRenderer from '../markdown/MarkdownRenderer';
 import chatgptLogo from '@/assets/img/chatgpt.png';
 import grokLogo from '@/assets/img/grok.png';

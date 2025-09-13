@@ -1,79 +1,123 @@
-# Vite React TS Chrome Extension (MV3) with Tailwind & HMR
+# AI Chat to Notion - Chrome Extension
 
-A Chrome Extension boilerplate using React + TypeScript, bundled by Vite, styled with Tailwind CSS, and powered by crxjs for MV3 + HMR.
+A Chrome Extension for converting AI chats to organized articles and syncing them to Notion. Supports ChatGPT and Grok platforms.
 
-## Features
+## 项目结构 / Project Structure
 
-- MV3 manifest via crxjs
-- React 18 + TypeScript
-- Vite 5 for fast dev/build
-- Tailwind CSS (JIT)
-- HMR for popup, options, background, and content script (via CRXJS)
+```
+aichat-to-notion/
+├── 📁 config/                    # Configuration files
+├── 📁 public/                    # Static assets and localization
+│   └── _locales/                # Chrome extension localization files
+├── 📁 scripts/                  # Build and utility scripts
+├── 📁 src/                      # Source code
+│   ├── 📁 api/                  # API integrations
+│   │   ├── chatApi.ts           # AI chat platform APIs
+│   │   ├── commonRequest.ts     # HTTP request utilities
+│   │   └── notionApi.ts         # Notion API integration
+│   ├── 📁 assets/               # Static assets
+│   │   └── img/                 # Images and icons
+│   ├── 📁 background/           # Background service worker (MV3)
+│   │   ├── lib/                 # Background utilities
+│   │   │   ├── badge.ts         # Extension badge management
+│   │   │   ├── contextMenus.ts  # Context menu handlers
+│   │   │   ├── notifications.ts # Browser notifications
+│   │   │   ├── state.ts         # Background state management
+│   │   │   └── storage.ts       # Chrome storage utilities
+│   │   ├── index.ts             # Background script entry
+│   │   ├── messageHandlers.ts   # Message handling logic
+│   │   └── messageRouter.ts     # Central message routing
+│   ├── 📁 collectors/           # Data collection from AI platforms
+│   │   ├── ChatgptCollector.ts  # ChatGPT-specific collector
+│   │   ├── CollectorFactory.ts  # Factory pattern implementation
+│   │   ├── DefaultCollector.ts  # Base collector implementation
+│   │   ├── GeminiCollector.ts   # Gemini-specific collector
+│   │   ├── GrokCollector.ts     # Grok-specific collector
+│   │   └── MessageCollector.ts  # Message collection interface
+│   ├── 📁 common/               # Shared utilities and services
+│   │   ├── db.ts                # IndexedDB management (Dexie)
+│   │   ├── i18n/                # Internationalization
+│   │   │   ├── i18n.tsx         # React i18n hooks
+│   │   │   └── langConst.ts     # Language constants
+│   │   └── toast/               # Notification system
+│   │       ├── index.ts         # Toast utilities
+│   │       ├── ToastManager.ts  # Toast management
+│   │       └── types.ts         # Toast type definitions
+│   ├── 📁 components/           # React components
+│   │   ├── common/              # Shared components
+│   │   │   ├── Loading.tsx      # Loading spinner
+│   │   │   ├── ModeSelector.tsx # UI mode selection
+│   │   │   ├── ResultItem.tsx   # Task result display
+│   │   │   └── ResultModal.tsx  # Result modal dialog
+│   │   ├── markdown/            # Markdown rendering
+│   │   │   ├── MarkdownRenderer.tsx # Main markdown renderer
+│   │   │   └── MermaidDiagram.tsx   # Mermaid diagram support
+│   │   ├── notion/              # Notion-related components
+│   │   │   └── NotionLocationPicker.tsx # Notion page picker
+│   │   ├── settings/            # Settings components
+│   │   └── ui/                  # UI components
+│   ├── 📁 content/              # Content scripts
+│   │   └── index.ts             # Content script entry
+│   ├── 📁 core/                 # Core business logic
+│   ├── 📁 hooks/                # React custom hooks
+│   ├── 📁 pages/                # Extension pages
+│   │   ├── options/             # Options page
+│   │   ├── popup/               # Extension popup
+│   │   └── sidepanel/           # Main sidepanel UI
+│   │       └── containers/      # Sidepanel containers
+│   ├── 📁 prompts/              # AI prompt templates
+│   ├── 📁 styles/               # Global styles
+│   ├── 📁 types/                # TypeScript type definitions
+│   └── 📁 utils/                # Utility functions
+├── manifest.config.ts           # Chrome extension manifest
+├── package.json                 # Dependencies and scripts
+├── tailwind.config.ts           # Tailwind CSS configuration
+├── tsconfig.json                # TypeScript configuration
+└── vite.config.ts               # Vite build configuration
+```
 
-## Scripts
+## 核心架构 / Core Architecture
 
-- Dev server: `npm run dev`
-- Production build: `npm run build`
-- Preview (generic Vite): `npm run preview`
+### Extension Components
+- **Background Service Worker** (`src/background/`): Extension lifecycle, message routing, task queue
+- **Content Scripts** (`src/content/`): Injected into AI chat platforms for data collection
+- **Side Panel** (`src/pages/sidepanel/`): Main UI for task management and results
+- **Options Page** (`src/pages/options/`): Extension configuration interface
 
-## Development (HMR)
+### Data Collection System
+- **Collector Factory** (`src/collectors/CollectorFactory.ts`): Platform-specific data extraction
+- **Platform Collectors**: ChatGPT, Grok, Gemini specialized collectors
+- **Message Router** (`src/background/messageRouter.ts`): Centralized communication
 
-1) Install dependencies
-- `npm install`
+### Storage & State Management
+- **Chrome Storage** (`src/background/lib/storage.ts`): Extension settings and state
+- **IndexedDB** (`src/common/db.ts`): Local data persistence with Dexie
+- **Task Queue System**: Background processing with state persistence
 
-2) Start dev build
-- `npm run dev`
+### UI & Components
+- **React 18 + TypeScript**: Modern component architecture
+- **Tailwind CSS**: Utility-first styling
+- **Internationalization**: Multi-language support via `_locales`
+- **Toast Notifications**: User feedback system
 
-3) Load the extension into Chrome
-- Open `chrome://extensions`
-- Enable "Developer mode"
-- Click "Load unpacked"
-- Select the folder `.output/chrome-mv3` (created by the dev server)
+## 技术栈 / Technology Stack
 
-4) Test changes
-- Open the extension popup to see React + Tailwind UI
-- Open Options Page via chrome://extensions → Details → Options
-- HMR will live-update popup/options/content/background when you edit files
+| Category | Technology |
+|----------|------------|
+| **Framework** | React 18 + TypeScript |
+| **Build Tool** | Vite + CRXJS |
+| **Styling** | Tailwind CSS |
+| **Extension API** | Chrome Extensions MV3 |
+| **Database** | IndexedDB (Dexie) |
+| **Integration** | Notion API |
+| **Markdown** | react-markdown + Mermaid |
 
-Notes:
-- Content script is injected on https://*/* and http://*/* (see manifest)
-- HMR for content script is supported by CRXJS; updates will be hot-applied or trigger reloads as needed
+## 开发命令 / Development Commands
 
-## Production Build
+```bash
+npm run dev     # Start development server with HMR
+npm run build   # Production build
+npm run preview # Preview build
+```
 
-- `npm run build`
-- Output directory: `dist/`
-- To load production build, use "Load unpacked" and choose `dist/`
-
-## Project Structure
-
-- `manifest.config.ts`: MV3 manifest source (crxjs)
-- `vite.config.ts`: Vite + React + CRX plugin config
-- `src/pages/popup/`: Popup page (HTML + TSX)
-- `src/pages/options/`: Options page (HTML + TSX)
-- `src/background/`: Background service worker (TS)
-- `src/content/`: Content script (TSX)
-- `src/styles/tailwind.css`: Tailwind base styles
-- Tailwind/PostCSS configs: `tailwind.config.ts`, `postcss.config.js`
-- TS configs: `tsconfig.json`, `tsconfig.node.json`
-
-## Files of Interest
-
-- Popup HTML: `src/pages/popup/index.html`
-- Popup entry: `src/pages/popup/main.tsx`
-- Options HTML: `src/pages/options/index.html`
-- Options entry: `src/pages/options/main.tsx`
-- Content script: `src/content/index.tsx`
-- Background SW: `src/background/index.ts`
-- Manifest (source): `manifest.config.ts`
-- Vite config: `vite.config.ts`
-
-## Troubleshooting
-
-- If VSCode shows "Cannot find name 'chrome'":
-  - We include `chrome-types`; ensure `tsconfig.json` has `"types": ["chrome-types", "vite/client"]` and VSCode TypeScript server has reloaded.
-- If Tailwind classes don't apply:
-  - Ensure `src/styles/tailwind.css` is imported in each page entry (popup/options).
-- If HMR doesn’t seem active:
-  - Confirm `.output/chrome-mv3` is loaded (dev build), not the `dist` folder.
-  - Check the terminal and DevTools console for CRXJS logs."# browser-extesion-boilerplate-react" 
+## Project Architecture

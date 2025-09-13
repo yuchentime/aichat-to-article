@@ -1,4 +1,4 @@
-import { ARTICLE_SYSTEM_PROMPT, ARTICLE_SYSTEM_PROMPT_EN, ARTICLE_SYSTEM_PROMPT_ZH_TW, SYSTEM_PROMPT, USER_PROMPT } from '../prompts/article_prompt';
+import { CLARIFICATION_SYSTME_PROMPT, ARTICLE_SYSTEM_PROMPT } from '../prompts/article_prompt';
 import commonRequest from './commonRequest';
 import { decrypt } from '../utils/crypto';
 
@@ -30,7 +30,7 @@ const getConfig = async (): Promise<ApiConfig> => {
     );
 };
 
-const request = async (messages: any[]): Promise<string> => {
+export const submitRequest = async (messages: any[]): Promise<string> => {
     const config = await getConfig();
 
     if (!config.apiKey) {
@@ -95,38 +95,22 @@ const request = async (messages: any[]): Promise<string> => {
     }
 };
 
-export const submitOnceRequest = async (userInput: string, lang: string): Promise<string> => {
+export const submitOnceRequest = async (userInput: string): Promise<string> => {
     const messages = [
-        { role: 'system', content: getSystemPrompt(lang) },
+        { role: 'system', content: ARTICLE_SYSTEM_PROMPT },
         { role: 'user', content: userInput },
     ];
 
-    return request(messages);
+    return submitRequest(messages);
 };
 
-export const submitMultiRequest = async (userInput: string, lang: string, lastResult: string): Promise<string> => {
+export const clarification = (input: string) => {
     const messages = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: USER_PROMPT
-            .replace('{lastResult}', lastResult)
-            .replace('{messageChunk}', userInput) },
+        { role: 'system', content: CLARIFICATION_SYSTME_PROMPT },
+        { role: 'user', content: input },
     ];
 
-    return request(messages);
-};
-
-const getSystemPrompt = (lang: string): string => {
-    switch (lang) {
-        case 'zh-CN':
-            return ARTICLE_SYSTEM_PROMPT;
-        case 'zh-TW':
-            return ARTICLE_SYSTEM_PROMPT_ZH_TW;
-        case 'zh-HK':
-            return ARTICLE_SYSTEM_PROMPT_ZH_TW;
-        case 'en':
-        default:
-            return ARTICLE_SYSTEM_PROMPT_EN;
-    }
+    return submitRequest(messages);
 }
 
 function ensureCompletionsEndpoint(input: string): string {

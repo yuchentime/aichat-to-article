@@ -1,6 +1,6 @@
 import { ensureContextMenus, registerContextMenuClickHandler } from './lib/contextMenus';
 import { hydrateState } from './lib/state';
-import { loadingTaskQueue } from './lib/queue';
+import { loadingTaskQueueFromDb } from '../core/taskQueue';
 import { routeMessage } from './messageRouter';
 
 const allowedHosts = ['chatgpt.com', 'grok.com'];
@@ -29,7 +29,7 @@ chrome.runtime.onStartup?.addListener(() => {
   ensureContextMenus(allowedHosts);
   // 加载未处理完的任务
   void hydrateState().then(() => {
-    loadingTaskQueue();
+    loadingTaskQueueFromDb();
   })
 });
 

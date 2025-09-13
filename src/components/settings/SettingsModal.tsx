@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useI18n } from '../../common/i18n';
+import { useI18n } from '../../common/i18n/i18n';
 import { showToast } from '@/common/toast';
 import ModeSelector from '../common/ModeSelector';
 
@@ -111,10 +111,9 @@ const SettingsModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     };
 
     const handleSave = async () => {
-        chrome.runtime.sendMessage({action: 'saveApiKey', currentConfig: config}).then(res => {
-          onClose();
-        })
-        
+      chrome.runtime.sendMessage({action: 'saveApiKey', currentConfig: config}).then(res => {
+        onClose();
+      })
     };
 
     const logoutNotion = () => {
